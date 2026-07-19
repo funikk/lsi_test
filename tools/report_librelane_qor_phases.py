@@ -199,5 +199,63 @@ def main():
         else:
             print(f"| {name} | N/A | N/A | N/A | N/A | N/A | N/A | {rt_str} | {el_str} |")
 
+    # Print Multi-Corner Timing Summary if metrics are available
+    all_metrics = None
+    if os.path.exists(final_json):
+        try:
+            with open(final_json, "r") as f:
+                all_metrics = json.load(f)
+        except Exception:
+            pass
+    if not all_metrics and m_route:
+        all_metrics = m_route
+
+    if all_metrics:
+        corner_prefix = "timing__setup__ws__corner:"
+        corners = []
+        for key in all_metrics.keys():
+            if key.startswith(corner_prefix):
+                corners.append(key[len(corner_prefix):])
+        corners.sort()
+
+        if corners or "timing__setup__ws" in all_metrics:
+            print("\n### 最終 Signoff Multi-Corner Timing QoR (全コーナー結果)")
+            print("| コーナー / グループ | Hold WNS | Hold TNS | Hold 違反数 | Setup WNS | Setup TNS | Setup 違反数 | Max Cap 違反 | Max Slew 違反 |")
+            print("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+
+            h_ws = all_metrics.get("timing__hold__ws")
+            h_tns = all_metrics.get("timing__hold__tns", 0)
+            h_vio = all_metrics.get("timing__hold_vio__count", 0)
+            s_ws = all_metrics.get("timing__setup__ws")
+            s_tns = all_metrics.get("timing__setup__tns", 0)
+            s_vio = all_metrics.get("timing__setup_vio__count", 0)
+            cap_vio = all_metrics.get("design__max_cap_violation__count", 0)
+            slew_vio = all_metrics.get("design__max_slew_violation__count", 0)
+
+            h_ws_str = f"{h_ws:+.4f} ns" if h_ws is not None else "N/A"
+            h_tns_str = f"{h_tns:+.4f} ns" if h_tns is not None else "0.0000 ns"
+            s_ws_str = f"{s_ws:+.4f} ns" if s_ws is not None else "N/A"
+            s_tns_str = f"{s_tns:+.4f} ns" if s_tns is not None else "0.0000 ns"
+
+            print(f"| **Overall** | **{h_ws_str}** | **{h_tns_str}** | **{h_vio}** | **{s_ws_str}** | **{s_tns_str}** | **{s_vio}** | **{cap_vio}** | **{slew_vio}** |")
+
+            for c in corners:
+                ch_ws = all_metrics.get(f"timing__hold__ws__corner:{c}")
+                ch_tns = all_metrics.get(f"timing__hold__tns__corner:{c}", 0)
+                ch_vio = all_metrics.get(f"timing__hold_vio__count__corner:{c}", 0)
+                cs_ws = all_metrics.get(f"timing__setup__ws__corner:{c}")
+                cs_tns = all_metrics.get(f"timing__setup__tns__corner:{c}", 0)
+                cs_vio = all_metrics.get(f"timing__setup_vio__count__corner:{c}", 0)
+                ccap_vio = all_metrics.get(f"design__max_cap_violation__count__corner:{c}", 0)
+                cslew_vio = all_metrics.get(f"design__max_slew_violation__count__corner:{c}", 0)
+
+                ch_ws_str = f"{ch_ws:+.4f} ns" if ch_ws is not None else "N/A"
+                ch_tns_str = f"{ch_tns:+.4f} ns" if ch_tns is not None else "0.0000 ns"
+                cs_ws_str = f"{cs_ws:+.4f} ns" if cs_ws is not None else "N/A"
+                cs_tns_str = f"{cs_tns:+.4f} ns" if cs_tns is not None else "0.0000 ns"
+
+                print(f"| `{c}` | {ch_ws_str} | {ch_tns_str} | {ch_vio} | {cs_ws_str} | {cs_tns_str} | {cs_vio} | {ccap_vio} | {cslew_vio} |")
+
 if __name__ == "__main__":
     main()
+
