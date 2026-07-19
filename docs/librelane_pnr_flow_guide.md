@@ -100,6 +100,7 @@ export PDK_ROOT=$(pwd)/pdks
 # LibreLane ディレクトリに移動してフロー実行
 cd librelane
 uv run python3 -m librelane -m $(pwd)/.. --dockerized \
+  --hide-progress-bar \
   --pdk-root $(pwd)/../pdks \
   -p sky130A \
   -s sky130_fd_sc_hd \

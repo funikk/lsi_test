@@ -58,6 +58,7 @@ gls_sim: syn firmware
 
 librelane:
 	cd ../librelane && export PDK_ROOT=$$(pwd)/../pdks && export UV_PYTHON_INSTALL_DIR=$$(pwd)/.uv_python && export UV_CACHE_DIR=$$(pwd)/.uv_cache && uv run --python 3.12 python3 -m librelane -m $$(pwd)/.. --dockerized \
+		--hide-progress-bar \
 		--pdk-root $$(pwd)/../pdks \
 		-p sky130A \
 		-s sky130_fd_sc_hs \
