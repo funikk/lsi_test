@@ -19,7 +19,7 @@ module lfsr_32_ctrl(
         end
     endfunction
 
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             out <= 32'h0;
         end else if (load_seed) begin

@@ -116,7 +116,7 @@ module aes_core(
     wire [127:0] next_key = {next_w0, next_w1, next_w2, next_w3};
 
     // State Machine & Registers
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             state_machine <= STATE_IDLE;
             round         <= 4'd0;

@@ -87,7 +87,7 @@ module aes_dma_subsys (
     assign prng_en = load_mode_en ? (aes_ready || (dma_state == DMA_IDLE && !load_active)) : 1'b0;
 
     // DMA and Mode Logic
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             dma_state       <= DMA_IDLE;
             dma_valid       <= 1'b0;
@@ -233,6 +233,7 @@ module aes_dma_subsys (
                         reg_status[1] <= 1'b1; // Set DMA_DONE
                         dma_state     <= DMA_IDLE;
                     end
+                    default: dma_state <= DMA_IDLE;
                 endcase
             end
         end
@@ -241,7 +242,7 @@ module aes_dma_subsys (
     wire load_mode_auto_clear = load_mode_en && load_active && aes_ready && (load_rem_blocks == 32'd1);
 
     // MMIO Slave Read/Write Interface
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             mmio_ready   <= 1'b0;
             mmio_rdata   <= 32'b0;
@@ -273,6 +274,7 @@ module aes_dma_subsys (
                         8'h40: reg_src_addr <= mmio_wdata;
                         8'h44: reg_dst_addr <= mmio_wdata;
                         8'h48: reg_len      <= mmio_wdata;
+                        default: ;
                     endcase
                 end else begin
                     // Read Logic
