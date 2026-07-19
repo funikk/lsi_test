@@ -1,0 +1,19 @@
+{
+    "DESIGN_NAME": "aes_prng_top",
+    "VERILOG_FILES": [
+        "dir::../../aes_prng_test/rtl/aes_sbox.v",
+        "dir::../../aes_prng_test/rtl/aes_core.v",
+        "dir::../../aes_prng_test/rtl/lfsr_prng.v",
+        "dir::../../aes_prng_test/rtl/aes_prng_top.v"
+    ],
+    "CLOCK_PERIOD": 8.0,
+    "CLOCK_PORT": "clk",
+    "CLOCK_NET": "ref::$CLOCK_PORT",
+    "STD_CELL_LIBRARY": "sky130_fd_sc_hs",
+    "STD_CELL_LIBRARY_OPT": "sky130_fd_sc_hs",
+    "pdk::sky130*": {
+        "FP_CORE_UTIL": 40,
+        "PL_TARGET_DENSITY_PCT": 45,
+        "MAX_FANOUT_CONSTRAINT": 20
+    }
+}

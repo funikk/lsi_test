@@ -1,0 +1,19 @@
+# Yosys synthesis script for counter
+# Read design
+read_verilog ../rtl/counter.v
+
+# Check design hierarchy and set top module
+hierarchy -check -top counter
+
+# Run synthesis flow
+synth -top counter
+
+# Optimizations
+opt
+clean
+
+# Display statistics
+stat
+
+# Write synthesized gate-level netlist
+write_verilog -noattr counter_synth.v

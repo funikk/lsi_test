@@ -1,0 +1,17 @@
+# read design
+read_verilog ../rtl/aes_sbox.v
+read_verilog ../rtl/aes_core.v
+read_verilog ../rtl/lfsr_prng.v
+read_verilog ../rtl/aes_prng_top.v
+
+# synthesize to generic logic
+synth -top aes_prng_top
+
+# mapping to internal cell library
+abc -g cmos2
+
+# opt and cleanup
+opt_clean
+
+# write netlist
+write_verilog -noattr aes_prng_top_synth.v

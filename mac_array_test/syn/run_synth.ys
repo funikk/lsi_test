@@ -1,0 +1,15 @@
+# read design
+read_verilog ../rtl/mac_unit.v
+read_verilog ../rtl/mac_array.v
+
+# synthesize to generic logic
+synth -top mac_array
+
+# mapping to internal cell library
+abc -g cmos2
+
+# opt and cleanup
+opt_clean
+
+# write netlist
+write_verilog -noattr mac_array_synth.v

@@ -1,0 +1,19 @@
+# Yosys synthesis script for async_fifo
+# Read design
+read_verilog ../rtl/async_fifo.v
+
+# Check design hierarchy and set top module with parameters
+hierarchy -check -top async_fifo -chparam DATA_WIDTH 8 -chparam ADDR_WIDTH 4
+
+# Run synthesis flow
+synth -top async_fifo
+
+# Optimizations
+opt
+clean
+
+# Display statistics
+stat
+
+# Write synthesized gate-level netlist
+write_verilog -noattr async_fifo_synth.v

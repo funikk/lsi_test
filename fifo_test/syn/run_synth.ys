@@ -1,0 +1,24 @@
+# Yosys synthesis script for sync_fifo
+# Read design
+read_verilog ../rtl/sync_fifo.v
+
+
+# Check design hierarchy and set top module with parameters
+hierarchy -check -top sync_fifo -chparam DATA_WIDTH 8 -chparam DEPTH 8 -chparam ALMOST_FULL_VAL 6 -chparam ALMOST_EMPTY_VAL 2
+
+
+
+# Run synthesis flow
+# This performs coarse-grained optimizations, FSM extraction, mapping to multiplexers and arithmetic logic
+synth -top sync_fifo
+
+# Map to generic internal gate cell library
+# Generates gate-level netlist in terms of standard logic gates (AND, OR, NOT, DFF, etc.)
+opt
+clean
+
+# Display design statistics (cell counts, register counts)
+stat
+
+# Write synthesized gate-level netlist
+write_verilog -noattr sync_fifo_synth.v
