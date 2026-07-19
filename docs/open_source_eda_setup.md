@@ -161,3 +161,55 @@ gtkwave tb_counter.vcd &
     *   PnRにおいて最も重要なのが「タイミング制約」です。クロックの周波数や入力/出力遅延を定義する **SDCファイル** の書き方を学習します。
 3.  **Tcl スクリプトによる自動化**
     *   Fusion Compilerなどのツールは、ほぼすべての操作を Tcl スクリプトで記述してバッチ実行します。合成やPnRの各工程をスクリプトで自動実行するスキルを磨いておくことが、商用ツールを扱う際の最大の強みになります。
+
+---
+
+## 6. LibreLane (PnR物理設計環境) のセットアップ手順
+
+**LibreLane** は、Yosys（論理合成）、OpenROAD（配置配線・Timing/Power解析）、Magic/KLayout（DRC/LVS/GDSII生成）を統合し、RTLからGDSIIレイアウトまでを自動生成する完全PythonベースのオープンソースASIC物理設計フローです。
+
+本環境では、高速なPythonパッケージマネージャーである **`uv`** を使用して独立したPython環境を構築します。
+
+### 事前準備
+1. **Docker のインストール**: コンテナ化されたEDAツール群を実行するために Docker が必要です。
+2. **`uv` のインストール**:
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   export PATH="$HOME/.local/bin:$PATH"
+   uv --version
+   ```
+
+### LibreLane のビルドとセットアップ手順
+
+```bash
+# 1. LibreLane リポジトリのクローン（プロジェクトルートにて実行）
+git clone https://github.com/librelane/librelane
+
+# 2. uv を用いて Python 3.11 仮想環境の作成とビルド
+cd librelane
+uv venv --python 3.11
+uv pip install -e .
+
+# 3. 動作確認
+uv run python3 -m librelane --help
+```
+
+### LibreLane での PnR 実行コマンド例
+
+```bash
+# プロジェクトルート (lsi_test) にて実行
+export PDK_ROOT=$(pwd)/pdks
+
+# aes_prng_top モジュールの PnR 実行（Docker統合モード）
+cd librelane
+uv run python3 -m librelane -m $(pwd)/.. --dockerized \
+  --pdk-root $(pwd)/../pdks \
+  -p sky130A -s sky130_fd_sc_hs \
+  --run-tag run_librelane \
+  ../librelane_designs/aes_prng_top/config.json
+```
+
+### 結果確認スクリプト
+* **QoRフェーズ別集計**: `./tools/report_librelane_qor_phases.py librelane_designs/aes_prng_top/runs/run_librelane`
+* **GUIビューア起動 (OpenROAD / KLayout / Magic)**: `./tools/open_librelane_viewer.sh openroad`
+
