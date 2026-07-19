@@ -107,3 +107,16 @@ make all
 *   [MAC Array Project Guide](mac_array_test/AGENTS.md): Systolic Array for PnR/IR-Drop testing.
 *   [AES PRNG Project Guide](aes_prng_test/AGENTS.md): Self-stimulating AES core for high-switching IR-Drop testing.
 *   [CPU + AES/PRNG Project Guide](cpu_aes_prng_test/AGENTS.md): Integrated RISC-V CPU + AES-DMA Subsystem for IR-Drop stress testing.
+
+---
+
+## 5. Documentation & Path Guidelines
+
+ドキュメントの作成および設定ファイル（`config.json` や Makefile 等）の記述時は、以下のパス指定ルールを遵守してください。
+
+* **絶対パスの禁止**:
+  * ホスト環境に依存する絶対パスの記述は行わないでください。
+* **相対パス / プロジェクトルートパスの採用**:
+  * ドキュメント内のファイル参照や設定ファイルのパス定義には、必ずプロジェクトルートからの相対パス（例: `docs/verilog_best_practices.md` や `../rtl/picorv32.v`）を使用してください。
+  * LibreLane などの設定ファイルでは `dir::` 記法を活用してください。
+  * シェルスクリプト等で絶対パスが必要な場合は `$(pwd)` または環境変数（`$WORKSPACE` 等）を用いて動的に取得・定義してください。
