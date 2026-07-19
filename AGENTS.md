@@ -89,6 +89,7 @@ make all
 *   [OpenLane PnR Flow Guide](docs/openlane_pnr_flow_guide.md): Guide for running physical design (PnR) on new modules.
 *   [QoR Comparison Report](docs/qor_comparison_report.md): Performance comparison of different standard cell libraries and clock targets.
 *   [LibreLane Migration Guide](docs/openlane_to_librelane_migration.md): Comparison of OpenLane 1 vs LibreLane (OpenLane 2) and migration instructions.
+*   [LibreLane PnR Flow Guide](docs/librelane_pnr_flow_guide.md): Guide for running physical design (PnR) on new modules using LibreLane.
 
 ### Subproject Reference Guides (AGENTS.md)
 *   [Counter Project Guide](counter_test/AGENTS.md): Simple 8-bit Counter.
