@@ -67,7 +67,26 @@ lsi_test/
 
 ---
 
-## 3. ステップ 2: LibreLane PnR フローの実行
+## 3. ステップ 2: プレ合成・RTL品質の高速チェック (`presynth_check`)
+
+PnR (配置配線) 実行前に、RTLに潜在する多重ドライバ違反や合成不能セル（例: 変数非同期リセットによる `$_ALDFFE_*` の生成）を **1 秒未満で事前抽出** するため、プレ合成チェックを実行します。
+
+```bash
+# 対象サブプロジェクトディレクトリにて実行 (例: cpu_aes_prng_test)
+cd cpu_aes_prng_test
+make presynth_check
+```
+
+### プレ合成チェックで事前に防止できる主な問題:
+1. **多重ドライバ違反 (Multiple Conflicting Drivers)**:
+   同一の `reg` が複数の `always` ブロックから駆動されている設計ミス。
+2. **非標準セルの生成 (Unmapped Cells / ALDFFE / Latch)**:
+   非同期リセット条件 `if (!rst_n)` 下で定数ではなく入力変数を代入 (`out <= seed_in`) し、PDKに存在しない非同期ロードフリップフロップが抽出されるミス。
+3. **フローティング配線・未接続ポート (Floating Wires)**.
+
+---
+
+## 4. ステップ 3: LibreLane PnR フローの実行
 
 プロジェクトルート (`lsi_test`) にて、`uv` パッケージマネージャーを介して LibreLane を Docker 統合モードで起動します。
 
