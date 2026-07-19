@@ -10,13 +10,14 @@ This directory (`cpu_aes_prng_test/`) contains an integrated LSI design combinin
 cpu_aes_prng_test/
 ├── AGENTS.md                  # Project overview and developer guide (this file)
 ├── Makefile                   # Top-level build & verification automation Makefile
-├── docs/                      # Sub-block technical specifications
+├── docs/                      # Sub-block technical specifications & licenses
 │   ├── spec_top.md            # Top-level architecture, interconnect, and memory map
 │   ├── spec_picorv32_cpu.md   # PicoRV32 RISC-V CPU core specification
 │   ├── spec_aes_dma_subsys.md # AES-DMA subsystem & MMIO register map specification
 │   ├── spec_lfsr_prng.md      # 128-bit LFSR PRNG specification
 │   ├── spec_aes_core.md       # Iterative AES-128 encryption core & S-box specification
-│   └── spec_memories.md       # Instruction RAM (imem) & Shared Data SRAM (dmem) specification
+│   ├── spec_memories.md       # Instruction RAM (imem) & Shared Data SRAM (dmem) specification
+│   └── licenses_and_citations.md # External IP licenses & citation documentation
 ├── rtl/                       # Synthesizable RTL Verilog source files
 │   ├── picorv32.v             # PicoRV32 32-bit RISC-V CPU core
 │   ├── aes_sbox.v             # Standard AES S-box lookup logic
