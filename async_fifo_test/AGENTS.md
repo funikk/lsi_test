@@ -44,6 +44,9 @@ Navigate to this directory (`async_fifo_test/`) and run:
 # Run lint check
 make lint
 
+# Run pre-synthesis fast check (0.7s)
+make presynth_check
+
 # Run RTL simulation
 make rtl_sim
 

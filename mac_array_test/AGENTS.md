@@ -14,3 +14,29 @@ This directory (`mac_array_test/`) contains an implementation of a parameterized
 * **mac_array**: A 2D grid of MAC units. Data `A` flows horizontally, `B` flows vertically, and partial sums `C` flow vertically downwards.
 
 This motif circuit is designed to stress the power grid when all units are active simultaneously.
+
+---
+
+## How to Run
+
+Navigate to this directory (`mac_array_test/`) and run:
+
+```bash
+# Run lint check
+make lint
+
+# Run pre-synthesis fast check (0.7s)
+make presynth_check
+
+# Run RTL simulation
+make rtl_sim
+
+# Run synthesis
+make syn
+
+# Run gate-level simulation (GLS)
+make gls_sim
+
+# Run all verification phases
+make all
+```
