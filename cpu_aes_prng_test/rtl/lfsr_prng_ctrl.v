@@ -21,7 +21,7 @@ module lfsr_32_ctrl(
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            out <= seed_in;
+            out <= 32'h0;
         end else if (load_seed) begin
             out <= seed_in;
         end else if (en) begin

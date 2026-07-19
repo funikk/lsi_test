@@ -123,7 +123,6 @@ module aes_dma_subsys (
                     if (load_rem_blocks > 32'd0) begin
                         if (load_rem_blocks == 32'd1) begin
                             // Target block count reached -> auto-return to normal mode
-                            reg_ctrl[1]   <= 1'b0; // Auto-clear LOAD_MODE_EN
                             reg_status[1] <= 1'b1; // Set DONE flag in STATUS
                             aes_start     <= 1'b0;
                             load_active   <= 1'b0;
@@ -239,6 +238,8 @@ module aes_dma_subsys (
         end
     end
 
+    wire load_mode_auto_clear = load_mode_en && load_active && aes_ready && (load_rem_blocks == 32'd1);
+
     // MMIO Slave Read/Write Interface
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -253,6 +254,9 @@ module aes_dma_subsys (
             reg_len      <= 32'b0;
         end else begin
             mmio_ready <= mmio_valid;
+            if (load_mode_auto_clear) begin
+                reg_ctrl[1] <= 1'b0;
+            end
             if (mmio_valid) begin
                 if (mmio_wstrb != 4'b0) begin
                     // Write Logic

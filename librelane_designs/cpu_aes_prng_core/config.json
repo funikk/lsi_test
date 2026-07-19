@@ -1,0 +1,23 @@
+{
+    "DESIGN_NAME": "cpu_aes_prng_core",
+    "VERILOG_FILES": [
+        "dir::../../cpu_aes_prng_test/rtl/aes_sbox.v",
+        "dir::../../cpu_aes_prng_test/rtl/aes_core.v",
+        "dir::../../cpu_aes_prng_test/rtl/lfsr_prng_ctrl.v",
+        "dir::../../cpu_aes_prng_test/rtl/aes_dma_subsys.v",
+        "dir::../../cpu_aes_prng_test/rtl/picorv32.v",
+        "dir::../../cpu_aes_prng_test/rtl/cpu_aes_prng_core.v"
+    ],
+    "CLOCK_PERIOD": 10.0,
+    "CLOCK_PORT": "clk",
+    "CLOCK_NET": "ref::$CLOCK_PORT",
+    "STD_CELL_LIBRARY": "sky130_fd_sc_hs",
+    "STD_CELL_LIBRARY_OPT": "sky130_fd_sc_hs",
+    "FP_PIN_ORDER_CFG": "dir::pin_order.cfg",
+    "BASE_SDC_FILE": "dir::constraint.sdc",
+    "pdk::sky130*": {
+        "FP_CORE_UTIL": 40,
+        "PL_TARGET_DENSITY_PCT": 45,
+        "MAX_FANOUT_CONSTRAINT": 20
+    }
+}

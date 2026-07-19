@@ -38,6 +38,7 @@ cpu_aes_prng_test/
 │   └── tb_cpu_aes_prng.v      # System testbench (supports RTL & Gate-Level Simulation)
 ├── sim/                       # Simulation output directory (VCD waves, executables)
 ├── syn/                       # Synthesis output directory (Yosys scripts, netlists)
+│   └── presynth_check.ys      # Pre-synthesis fast quality check script (0.7s)
 └── gls/                       # Gate-Level Simulation output directory
 ```
 
@@ -79,22 +80,31 @@ make clean
 # 1. Compile firmware standalone
 make firmware
 
-# 2. Run Verilator lint check on RTL
+# 2. Run Verilator lint check on RTL (strict multi-driver checking)
 make lint
 
-# 3. Run Icarus Verilog RTL simulation
+# 3. Run ultra-fast Yosys Pre-Synthesis Check (0.7s, catches ALDFFE/Multi-driver errors)
+make presynth_check
+
+# 4. Run Icarus Verilog RTL simulation
 make rtl_sim
 
-# 4. Run Yosys logic synthesis
+# 5. Run Yosys logic synthesis
 make syn
 
-# 5. Run Gate-Level Simulation (GLS)
+# 6. Run Gate-Level Simulation (GLS)
 make gls_sim
 
-# 6. Run all verification steps (firmware -> lint -> rtl_sim -> syn -> gls_sim)
+# 7. Run LibreLane Physical Design (PnR) flow (100MHz, sky130_fd_sc_hs)
+make librelane
+
+# 8. Report phase-by-phase LibreLane QoR & runtime table (hh:mm:ss format)
+make librelane_qor
+
+# 9. Run all verification steps
 make all
 
-# 7. Clean temporary files
+# 10. Clean temporary files
 make clean
 ```
 
