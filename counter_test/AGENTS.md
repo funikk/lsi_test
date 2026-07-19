@@ -28,6 +28,7 @@ counter_test/
 *   [counter.v (RTL)](rtl/counter.v): 8-bit counter module.
 *   [tb_counter.v (TB)](tb/tb_counter.v): Testbench verifying the counter's behavior and dumping VCD waves.
 *   [run_synth.ys (Synthesis Script)](syn/run_synth.ys): Yosys script mapping the counter module to gate cells.
+*   [config.json (LibreLane Config)](../librelane_designs/counter/config.json): LibreLane PnR flow configuration for counter.
 
 ---
 
@@ -51,6 +52,13 @@ make syn
 # Run gate-level simulation (GLS)
 make gls_sim
 
+# Run LibreLane PnR flow
+make librelane
+
+# Report LibreLane QoR & runtime summary
+make librelane_qor
+
 # Run all verification phases
 make all
 ```
+
