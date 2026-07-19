@@ -1,0 +1,6 @@
+# Yosys Pre-Synthesis Fast Check Script for counter
+read_verilog -sv ../rtl/counter.v
+hierarchy -top counter
+proc
+check -assert
+opt_clean

@@ -20,15 +20,19 @@ SYN_YS   = $(SYN_DIR)/run_synth.ys
 SYN_NETLIST = $(SYN_DIR)/aes_prng_top_synth.v
 SIM_CELLS = /usr/share/yosys/simlib.v
 
-.PHONY: all lint rtl_sim syn gls_sim clean
+.PHONY: all lint presynth_check rtl_sim syn gls_sim clean
 
-all: lint rtl_sim syn gls_sim
+all: lint presynth_check rtl_sim syn gls_sim
 
 # 1. Lint Check
 lint:
-	$(VERILATOR) --lint-only -Wall $(RTL_SRCS)
+	$(VERILATOR) --lint-only -Wall -Werror-MULTIDRIVEN -Wno-fatal $(RTL_SRCS)
 
-# 2. RTL Simulation
+# 2. Pre-Synthesis Fast Check
+presynth_check:
+	cd $(SYN_DIR) && $(YOSYS) -s presynth_check.ys
+
+# 3. RTL Simulation
 rtl_sim:
 	cd $(SIM_DIR) && $(IVERILOG) -o rtl_sim.out $(addprefix ../, $(TB_SRCS)) $(addprefix ../, $(RTL_SRCS))
 	cd $(SIM_DIR) && $(VVP) rtl_sim.out

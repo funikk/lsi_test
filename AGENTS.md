@@ -62,8 +62,11 @@ A `Makefile` is located in the root of each project subdirectory (`counter_test/
 # Clean all temporary files (sim results, netlists, wave dumps)
 make clean
 
-# Run lint checks on RTL
+# Run lint checks on RTL (Verilator)
 make lint
+
+# Run pre-synthesis fast quality check (Yosys proc & check -assert, 0.7s)
+make presynth_check
 
 # Run RTL Simulation (output files go into sim/)
 make rtl_sim
@@ -74,7 +77,13 @@ make syn
 # Run Gate-Level Simulation using Yosys cell library (results go into gls/)
 make gls_sim
 
-# Run all verification phases (lint -> rtl_sim -> syn -> gls_sim)
+# Run LibreLane PnR flow (physical design)
+make librelane
+
+# Report phase-by-phase LibreLane QoR & runtime table (hh:mm:ss format)
+make librelane_qor
+
+# Run all verification phases (lint -> presynth_check -> rtl_sim -> syn -> gls_sim)
 make all
 ```
 

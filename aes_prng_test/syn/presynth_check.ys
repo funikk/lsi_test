@@ -1,0 +1,9 @@
+# Yosys Pre-Synthesis Fast Check Script for aes_prng_top
+read_verilog -sv ../rtl/aes_sbox.v
+read_verilog -sv ../rtl/aes_core.v
+read_verilog -sv ../rtl/lfsr_prng.v
+read_verilog -sv ../rtl/aes_prng_top.v
+hierarchy -top aes_prng_top
+proc
+check -assert
+opt_clean

@@ -1,0 +1,6 @@
+# Yosys Pre-Synthesis Fast Check Script for async_fifo
+read_verilog -sv ../rtl/async_fifo.v
+hierarchy -top async_fifo
+proc
+check -assert
+opt_clean
