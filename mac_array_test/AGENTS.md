@@ -8,6 +8,7 @@ This directory (`mac_array_test/`) contains an implementation of a parameterized
 - `sim/`: Output directory for RTL simulations.
 - `syn/`: Output directory for synthesis.
 - `gls/`: Output directory for Gate-Level Simulations.
+- `config.json` ([LibreLane Config](../librelane_designs/mac_array/config.json)): LibreLane PnR flow configuration.
 
 ## Design Details
 * **mac_unit**: A single Multiply-Accumulate cell with registered inputs and outputs.
@@ -37,6 +38,13 @@ make syn
 # Run gate-level simulation (GLS)
 make gls_sim
 
+# Run LibreLane PnR flow
+make librelane
+
+# Report LibreLane QoR & runtime summary
+make librelane_qor
+
 # Run all verification phases
 make all
 ```
+
