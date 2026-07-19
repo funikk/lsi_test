@@ -27,9 +27,12 @@ lsi_test/
 ├── mac_array_test/            # Project 4: MAC Array (Systolic Array for IR-Drop)
 │   ├── AGENTS.md              # MAC Array-specific reference
 │   └── ... (standard subdirs: rtl, tb, sim, syn, gls)
-└── aes_prng_test/             # Project 5: AES-128 PRNG (High-Switching IR-Drop Motif)
-    ├── AGENTS.md              # AES PRNG-specific reference
-    └── ... (standard subdirs: rtl, tb, sim, syn, gls)
+├── aes_prng_test/             # Project 5: AES-128 PRNG (High-Switching IR-Drop Motif)
+│   ├── AGENTS.md              # AES PRNG-specific reference
+│   └── ... (standard subdirs: rtl, tb, sim, syn, gls)
+└── cpu_aes_prng_test/         # Project 6: CPU + AES/PRNG Integrated Stress Testbed
+    ├── AGENTS.md              # CPU + AES/PRNG-specific reference
+    └── ... (standard subdirs: rtl, docs, firmware, tb, sim, syn, gls)
 ```
 
 Within each design project subdirectory, the following structure is maintained:
@@ -53,7 +56,7 @@ The following open-source tools are installed and verified:
 
 ## 3. Automation Commands (Makefile)
 
-A `Makefile` is located in the root of each project subdirectory (`counter_test/`, `fifo_test/`, `async_fifo_test/`, `mac_array_test/`, `aes_prng_test/`). The available targets are:
+A `Makefile` is located in the root of each project subdirectory (`counter_test/`, `fifo_test/`, `async_fifo_test/`, `mac_array_test/`, `aes_prng_test/`, `cpu_aes_prng_test/`). The available targets are:
 
 ```bash
 # Clean all temporary files (sim results, netlists, wave dumps)
@@ -93,3 +96,4 @@ make all
 *   [Asynchronous FIFO Project Guide](async_fifo_test/AGENTS.md): CDC Asynchronous FIFO.
 *   [MAC Array Project Guide](mac_array_test/AGENTS.md): Systolic Array for PnR/IR-Drop testing.
 *   [AES PRNG Project Guide](aes_prng_test/AGENTS.md): Self-stimulating AES core for high-switching IR-Drop testing.
+*   [CPU + AES/PRNG Project Guide](cpu_aes_prng_test/AGENTS.md): Integrated RISC-V CPU + AES-DMA Subsystem for IR-Drop stress testing.

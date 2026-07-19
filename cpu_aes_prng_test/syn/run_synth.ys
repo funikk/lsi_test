@@ -1,0 +1,29 @@
+# read design files
+read_verilog ../rtl/picorv32.v
+read_verilog ../rtl/aes_sbox.v
+read_verilog ../rtl/aes_core.v
+read_verilog ../rtl/lfsr_prng_ctrl.v
+read_verilog ../rtl/aes_dma_subsys.v
+read_verilog ../rtl/cpu_aes_prng_core.v
+read_verilog ../rtl/imem.v
+read_verilog ../rtl/dmem.v
+read_verilog ../rtl/cpu_aes_prng_top.v
+
+# override RAM size parameters for fast gate-level logic synthesis
+chparam -set MEM_SIZE_WORDS 128 imem
+chparam -set MEM_SIZE_WORDS 128 dmem
+
+# synthesize top module
+synth -top cpu_aes_prng_top
+
+# mapping to generic gates
+abc -g cmos2
+
+# optimization and cleanup
+opt_clean
+
+# print statistics
+stat
+
+# write synthesizable netlist
+write_verilog -noattr cpu_aes_prng_top_synth.v
