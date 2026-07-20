@@ -210,6 +210,34 @@ uv run python3 -m librelane -m $(pwd)/.. --dockerized \
 ```
 
 ### 結果確認スクリプト
-* **QoRフェーズ別集計**: `./tools/report_librelane_qor_phases.py librelane_designs/aes_prng_top/runs/run_librelane`
-* **GUIビューア起動 (OpenROAD / KLayout / Magic)**: `./tools/open_librelane_viewer.sh openroad`
+* **QoRフェーズ別集計**: `./tools/report_qor_phases.py librelane_designs/aes_prng_top/runs/run_pnr`
+* **GUIビューア起動 (OpenROAD / KLayout / Magic)**: `./tools/open_viewer.sh openroad`
+
+---
+
+## 7. エージェントサンドボックス環境での uv の設定とワークアラウンド
+
+AIエージェントの安全な実行環境（セキュリティサンドボックス）下で `uv` を実行する場合、ネットワーク制限やファイルシステムの書き込み制限により、動作が妨げられる場合があります。これを回避するために以下のワークアラウンドが導入されています。
+
+### ① キャッシュとツール格納ディレクトリの分離と権限許可
+`uv` はデフォルトでホームディレクトリ（`~/.cache/uv` および `~/.local/share/uv`）を使用して、ダウンロードした Python パッケージや Python インタプリタバイナリを管理します。
+
+* **サンドボックス設定で許可する場合 (推奨)**:
+  * サンドボックスの権限設定において、`~/.cache/uv` と `~/.local/share/uv` に対する **Read/Write 権限** を追加することで、ホストとキャッシュを安全に共有し、余分なディスク容量を消費せずに高速実行できます。
+* **環境変数でワークスペース内に隔離する場合**:
+  * ホームディレクトリへのアクセスが制限されている場合、Makefile 等で以下のように環境変数を設定し、キャッシュをワークスペース内に閉じ込めます。
+    ```makefile
+    export UV_CACHE_DIR=$(pwd)/.uv_cache
+    export UV_PYTHON_INSTALL_DIR=$(pwd)/.uv_python
+    ```
+
+### ② ネットワーク制限対策 (オフライン実行)
+サンドボックスから PyPI へのインターネットアクセスが遮断されている場合、`uv run` は新規パッケージのダウンロードに失敗します。
+
+* **対策**:
+  1. 事前にホスト環境（ネットワーク接続あり）で必要なパッケージを `uv run` または `uv pip install` などで一度実行してローカルにキャッシュします。
+  2. サンドボックス環境下では、オフライン実行を指定します。
+     ```bash
+     uv run --offline python3 -m librelane ...
+     ```
 
