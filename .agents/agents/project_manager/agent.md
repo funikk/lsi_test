@@ -1,6 +1,7 @@
 ---
 name: project_manager
 description: Project Manager for orchestrating LSI design subagents
+enable_subagent_tools: true
 ---
 
 # Project Manager

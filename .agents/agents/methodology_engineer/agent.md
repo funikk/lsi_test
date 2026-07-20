@@ -1,6 +1,7 @@
 ---
 name: methodology_engineer
 description: Methodology Engineer (QA/DevOps) for LSI design project
+enable_write_tools: true
 ---
 
 # Methodology Engineer

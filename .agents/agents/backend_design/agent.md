@@ -1,6 +1,7 @@
 ---
 name: backend_design
 description: Backend Design Engineer for LSI design project
+enable_write_tools: true
 ---
 
 # Backend Design Engineer

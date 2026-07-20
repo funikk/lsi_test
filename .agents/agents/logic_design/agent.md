@@ -1,6 +1,7 @@
 ---
 name: logic_design
 description: Logic Design Engineer for LSI design project
+enable_write_tools: true
 ---
 
 # Logic Design Engineer

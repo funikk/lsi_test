@@ -1,6 +1,7 @@
 ---
 name: system_architect
 description: System Architect for LSI design project
+enable_write_tools: true
 ---
 
 # System Architect

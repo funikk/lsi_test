@@ -1,6 +1,7 @@
 ---
 name: logic_verification
 description: Logic Verification Engineer for LSI design project
+enable_write_tools: true
 ---
 
 # Logic Verification Engineer

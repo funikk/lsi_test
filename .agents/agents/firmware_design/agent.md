@@ -1,6 +1,7 @@
 ---
 name: firmware_design
 description: Firmware Design Engineer for LSI design project
+enable_write_tools: true
 ---
 
 # Firmware Design Engineer
