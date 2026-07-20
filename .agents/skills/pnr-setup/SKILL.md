@@ -189,7 +189,9 @@ make pnr_qor
 ### Step 5: Verify & Report Results
 
 1. Verify formatting of `config.json`, `constraint.sdc`, `Makefile`, and `AGENTS.md`.
-2. Present a concise summary to the user including file links, applied constraints, and execution instructions.
+2. Invoke `backend_design` subagent to execute real PnR testing and verify QoR output.
+3. Solicit usability feedback from the subagent and refine scripts or parameters if needed.
+4. Only mark development complete and commit changes after successful subagent verification.
 
 ---
 
