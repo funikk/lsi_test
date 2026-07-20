@@ -35,6 +35,11 @@ cpu_aes_prng_test/
 │   ├── Makefile               # Standalone Makefile for firmware compilation
 │   └── gen_firmware.py        # Python wrapper script calling GCC & bin2hex
 ├── tb/                        # Testbench
+│   ├── docs/                  # Unit verification specifications
+│   │   ├── spec_verification_aes.md  # AES-128 core unit verification spec
+│   │   └── spec_verification_prng.md # LFSR PRNG unit verification spec
+│   ├── tb_aes_core.v          # AES core unit testbench
+│   ├── tb_lfsr_prng_ctrl.v    # LFSR PRNG unit testbench
 │   └── tb_cpu_aes_prng.v      # System testbench (supports RTL & Gate-Level Simulation)
 ├── sim/                       # Simulation output directory (VCD waves, executables)
 ├── syn/                       # Synthesis output directory (Yosys scripts, netlists)
@@ -86,25 +91,29 @@ make lint
 # 3. Run ultra-fast Yosys Pre-Synthesis Check (0.7s, catches ALDFFE/Multi-driver errors)
 make presynth_check
 
-# 4. Run Icarus Verilog RTL simulation
+# 4. Run AES & PRNG unit simulations (verifies tb_aes_core.v and tb_lfsr_prng_ctrl.v)
+make unit_sim
+# (or individually: make test_aes / make test_prng)
+
+# 5. Run Icarus Verilog system RTL simulation
 make rtl_sim
 
-# 5. Run Yosys logic synthesis
+# 6. Run Yosys logic synthesis
 make syn
 
-# 6. Run Gate-Level Simulation (GLS)
+# 7. Run Gate-Level Simulation (GLS)
 make gls_sim
 
-# 7. Run PnR flow (100MHz, sky130_fd_sc_hs)
+# 8. Run PnR flow (100MHz, sky130_fd_sc_hs)
 make pnr
 
-# 8. Report phase-by-phase QoR & runtime table (hh:mm:ss format)
+# 9. Report phase-by-phase QoR & runtime table (hh:mm:ss format)
 make pnr_qor
 
-# 9. Run all verification steps
+# 10. Run all verification steps
 make all
 
-# 10. Clean temporary files
+# 11. Clean temporary files
 make clean
 ```
 
@@ -112,10 +121,13 @@ make clean
 
 ## 5. Technical Specifications Link Index
 
-For detailed sub-block designs, refer to the documents in `docs/`:
+For detailed sub-block designs & verification specifications, refer to the documents:
 - [Top-Level Architecture & Memory Map Guide](docs/spec_top.md)
 - [PicoRV32 RISC-V CPU Core Specification](docs/spec_picorv32_cpu.md)
 - [AES-DMA Subsystem & MMIO Register Specification](docs/spec_aes_dma_subsys.md)
 - [128-bit LFSR PRNG Specification](docs/spec_lfsr_prng.md)
 - [Iterative AES-128 Encryption Core Specification](docs/spec_aes_core.md)
 - [Instruction RAM (imem) & Shared Data SRAM (dmem) Specification](docs/spec_memories.md)
+- [AES-128 Unit Verification Specification](tb/docs/spec_verification_aes.md)
+- [LFSR PRNG Unit Verification Specification](tb/docs/spec_verification_prng.md)
+

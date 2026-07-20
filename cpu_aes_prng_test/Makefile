@@ -24,14 +24,17 @@ RTL_SRCS = $(RTL_DIR)/picorv32.v \
            $(RTL_DIR)/reset_sync.v \
            $(RTL_DIR)/cpu_aes_prng_top.v
 
-TB_SRCS  = $(TB_DIR)/tb_cpu_aes_prng.v
+TB_SRCS   = $(TB_DIR)/tb_cpu_aes_prng.v
+AES_TB    = $(TB_DIR)/tb_aes_core.v
+PRNG_TB   = $(TB_DIR)/tb_lfsr_prng_ctrl.v
+
 SYN_YS   = $(SYN_DIR)/run_synth.ys
 SYN_NETLIST = $(SYN_DIR)/cpu_aes_prng_top_syn.v
 SIM_CELLS = /usr/share/yosys/simlib.v
 
-.PHONY: all firmware lint presynth_check rtl_sim syn gls_sim pnr pnr_qor clean
+.PHONY: all firmware lint presynth_check rtl_sim unit_sim test_aes test_prng syn gls_sim pnr pnr_qor clean
 
-all: firmware lint rtl_sim syn gls_sim
+all: firmware lint unit_sim rtl_sim syn gls_sim
 
 firmware:
 	$(MAKE) -C $(FW_DIR)
@@ -43,6 +46,16 @@ lint:
 
 presynth_check:
 	cd $(SYN_DIR) && $(YOSYS) -s presynth_check.ys
+
+unit_sim: test_aes test_prng
+
+test_aes:
+	cd $(SIM_DIR) && $(IVERILOG) -o test_aes.out ../$(AES_TB) ../$(RTL_DIR)/aes_core.v ../$(RTL_DIR)/aes_sbox.v
+	cd $(SIM_DIR) && $(VVP) test_aes.out
+
+test_prng:
+	cd $(SIM_DIR) && $(IVERILOG) -o test_prng.out ../$(PRNG_TB) ../$(RTL_DIR)/lfsr_prng_ctrl.v
+	cd $(SIM_DIR) && $(VVP) test_prng.out
 
 rtl_sim: firmware
 	cd $(SIM_DIR) && $(IVERILOG) -o rtl_sim.out $(addprefix ../, $(TB_SRCS)) $(addprefix ../, $(RTL_SRCS))
@@ -65,7 +78,6 @@ pnr_qor:
 
 clean:
 	$(MAKE) -C $(FW_DIR) clean
-	rm -f $(SIM_DIR)/rtl_sim.out $(SIM_DIR)/tb_cpu_aes_prng.vcd $(SIM_DIR)/firmware.hex
+	rm -f $(SIM_DIR)/rtl_sim.out $(SIM_DIR)/test_aes.out $(SIM_DIR)/test_prng.out $(SIM_DIR)/tb_cpu_aes_prng.vcd $(SIM_DIR)/firmware.hex
 	rm -f $(GLS_DIR)/gls_sim.out $(GLS_DIR)/tb_cpu_aes_prng.vcd
 	rm -f $(SYN_DIR)/cpu_aes_prng_top_syn.v $(SYN_DIR)/cpu_aes_prng_top_synth.v $(SYN_DIR)/firmware.hex
-

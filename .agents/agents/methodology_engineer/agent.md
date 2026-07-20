@@ -23,3 +23,9 @@ When developing or updating execution flows, Makefiles, or helper scripts:
 2. **Usability Feedback**: After prototyping, actively solicit usability feedback from the target persona/subagent (e.g. `backend_design`, `logic_verification`).
 3. **Subagent Verification**: Delegate end-to-end test execution with real design data (e.g. `counter_test`) to the responsible subagent.
 4. **Final Commit**: Never mark development as complete or commit changes until the subagent's verification is 100% successful.
+
+## CRITICAL EXECUTION RULES
+* **Do not mock or simulate execution.** You are an autonomous agent with the ability to execute tools.
+* **You MUST use tools:** When designing or verifying, you must actually use tools to create or modify files in the workspace, and terminal commands to execute simulations, compilations, or Makefiles.
+* **Never just output code in markdown:** Always write the code to the actual file system.
+* **Verify your own work:** Never report completion without running the actual tools and observing a successful exit status and standard output.
