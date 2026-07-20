@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+import json
 import argparse
 import subprocess
 from pathlib import Path
@@ -15,12 +16,10 @@ def resolve_paths(module_name: str):
         print(f"Error: LibreLane directory not found at {librelane_dir}", file=sys.stderr)
         sys.exit(1)
 
-    # Resolve config file under librelane_designs/
     designs_dir = workspace_root / "librelane_designs"
     target_design_dir = designs_dir / module_name
     
     if not target_design_dir.exists():
-        # Fallback check if full name ends with _test or _core
         matched = list(designs_dir.glob(f"*{module_name}*"))
         if matched:
             target_design_dir = matched[0]
@@ -33,12 +32,38 @@ def resolve_paths(module_name: str):
         print(f"Error: config.json not found at {config_json}", file=sys.stderr)
         sys.exit(1)
 
-    return workspace_root, librelane_dir, pdk_root, config_json
+    return workspace_root, librelane_dir, pdk_root, target_design_dir, config_json
 
-def run_single_pnr(workspace_root, librelane_dir, pdk_root, config_json,
+def read_config_defaults(config_json: Path):
+    clk_period = 10.0
+    std_cell = "sky130_fd_sc_hd"
+    try:
+        with open(config_json, "r") as f:
+            data = json.load(f)
+            clk_period = float(data.get("CLOCK_PERIOD", clk_period))
+            std_cell = str(data.get("STD_CELL_LIBRARY", std_cell))
+    except Exception as e:
+        print(f"Notice: Could not parse config.json defaults ({e}), using fallback defaults.", file=sys.stderr)
+    return clk_period, std_cell
+
+def run_single_pnr(workspace_root, librelane_dir, pdk_root, target_design_dir, config_json,
                    clk_period=None, std_cell=None, core_util=None,
                    run_tag=None, overwrite=True, from_step=None, to_step=None,
-                   hide_progress_bar=True, dry_run=False):
+                   hide_progress_bar=True, report_qor=True, dry_run=False):
+
+    # 1. Parse defaults from config.json if CLI arguments are not set
+    default_clk_period, default_std_cell = read_config_defaults(config_json)
+
+    eff_clk_period = clk_period if clk_period is not None else default_clk_period
+    eff_std_cell = std_cell if std_cell is not None else default_std_cell
+    eff_freq_mhz = int(round(1000.0 / eff_clk_period))
+
+    # 2. Determine default or custom run_tag matching project conventions
+    if not run_tag:
+        if "hs" in eff_std_cell:
+            run_tag = f"run_{eff_freq_mhz}MHz_hs"
+        else:
+            run_tag = f"run_{eff_freq_mhz}MHz"
 
     cmd = [
         "uv", "run", "--python", "3.12", "python3", "-m", "librelane"
@@ -49,27 +74,7 @@ def run_single_pnr(workspace_root, librelane_dir, pdk_root, config_json,
 
     cmd.extend(["--pdk-root", str(pdk_root)])
     cmd.extend(["-p", "sky130A"])
-
-    if std_cell:
-        cmd.extend(["-s", std_cell])
-    else:
-        cmd.extend(["-s", "sky130_fd_sc_hd"])
-
-    # Determine default or custom run_tag
-    if not run_tag:
-        tag_parts = ["run"]
-        if clk_period is not None:
-            freq_mhz = int(round(1000.0 / clk_period))
-            tag_parts.append(f"{freq_mhz}MHz")
-        else:
-            tag_parts.append("pnr")
-        
-        if std_cell:
-            short_scl = "hs" if "hs" in std_cell else "hd"
-            tag_parts.append(short_scl)
-        
-        run_tag = "_".join(tag_parts)
-
+    cmd.extend(["-s", eff_std_cell])
     cmd.extend(["--run-tag", run_tag])
 
     if overwrite:
@@ -96,16 +101,44 @@ def run_single_pnr(workspace_root, librelane_dir, pdk_root, config_json,
 
     cmd_str = " ".join(cmd)
     print(f"\n==========================================")
-    print(f" Executing PnR Flow for {config_json.parent.name}")
+    print(f" Executing PnR Flow for {target_design_dir.name}")
+    print(f" Tag: {run_tag} | Target: {eff_freq_mhz}MHz ({eff_clk_period:.2f}ns) | SCL: {eff_std_cell}")
     print(f" Command: {cmd_str}")
     print(f"==========================================\n")
 
     if dry_run:
         print("[DRY-RUN] Command will not be executed.")
-        return 0
+        return 0, target_design_dir / "runs" / run_tag
 
     res = subprocess.run(cmd, cwd=librelane_dir, env=env)
-    return res.returncode
+    run_dir = target_design_dir / "runs" / run_tag
+
+    if res.returncode == 0 and report_qor:
+        print("\n--- PnR Flow Complete. Outputting QoR Summary ---")
+        report_script = workspace_root / "tools" / "report_qor_phases.py"
+        if report_script.exists():
+            subprocess.run([sys.executable, str(report_script), str(run_dir)])
+
+    return res.returncode, run_dir
+
+def parse_run_metrics(run_dir: Path):
+    final_json = run_dir / "final" / "metrics.json"
+    if not final_json.exists():
+        return None
+    try:
+        with open(final_json, "r") as f:
+            data = json.load(f)
+            return {
+                "instances": data.get("design__instance__count", "N/A"),
+                "area": data.get("design__instance__area__stdcell", data.get("design__instance__area", "N/A")),
+                "setup_ws": data.get("timing__setup__ws", "N/A"),
+                "setup_vio": data.get("timing__setup_vio__count", 0),
+                "hold_ws": data.get("timing__hold__ws", "N/A"),
+                "hold_vio": data.get("timing__hold_vio__count", 0),
+                "drc": data.get("magic__drc_error__count", data.get("klayout__drc_error__count", 0))
+            }
+    except Exception:
+        return None
 
 def main():
     parser = argparse.ArgumentParser(description="Unified PnR execution & sweep script for LibreLane flow.")
@@ -119,41 +152,75 @@ def main():
     parser.add_argument("--from-step", type=str, help="Resume flow starting from step ID (e.g. openroad-detailedplacement)")
     parser.add_argument("--to-step", type=str, help="Stop flow at step ID")
     parser.add_argument("--sweep-clk", type=str, help="Comma-separated list of clock periods in ns for sweep testing (e.g. 10.0,8.0,6.67,5.0)")
+    parser.add_argument("--report-qor", action="store_true", default=True, help="Automatically display QoR summary after run (default: True)")
+    parser.add_argument("--no-report-qor", action="store_false", dest="report_qor", help="Disable automatic QoR summary display")
     parser.add_argument("--dry-run", action="store_true", help="Print generated command line without executing")
 
     args = parser.parse_args()
 
-    workspace_root, librelane_dir, pdk_root, config_json = resolve_paths(args.module)
+    workspace_root, librelane_dir, pdk_root, target_design_dir, config_json = resolve_paths(args.module)
 
     if args.sweep_clk:
         periods = [float(p.strip()) for p in args.sweep_clk.split(",")]
-        print(f"Starting clock period sweep over {len(periods)} values: {periods}")
-        results = {}
+        print(f"Starting clock period sweep over {len(periods)} values: {periods} ns")
+        sweep_results = []
         for p in periods:
-            tag = f"run_{int(round(1000.0/p))}MHz"
-            ret = run_single_pnr(
-                workspace_root, librelane_dir, pdk_root, config_json,
+            freq_mhz = int(round(1000.0 / p))
+            eff_scl = args.std_cell if args.std_cell else read_config_defaults(config_json)[1]
+            scl_suffix = "_hs" if "hs" in eff_scl else ""
+            tag = f"run_{freq_mhz}MHz{scl_suffix}"
+
+            ret, run_dir = run_single_pnr(
+                workspace_root, librelane_dir, pdk_root, target_design_dir, config_json,
                 clk_period=p, std_cell=args.std_cell, core_util=args.core_util,
                 run_tag=tag, overwrite=args.overwrite,
-                from_step=args.from_step, to_step=args.to_step, dry_run=args.dry_run
+                from_step=args.from_step, to_step=args.to_step,
+                report_qor=False, dry_run=args.dry_run
             )
-            results[p] = ret
+
+            metrics = parse_run_metrics(run_dir) if not args.dry_run else None
+            sweep_results.append({
+                "period": p,
+                "freq_mhz": freq_mhz,
+                "tag": tag,
+                "ret": ret,
+                "metrics": metrics,
+                "run_dir": run_dir
+            })
+
             if ret != 0:
-                print(f"Sweep stopped early due to failure at {p} ns ({1000.0/p:.1f} MHz).")
+                print(f"Sweep stopped early due to failure at {p} ns ({freq_mhz} MHz).")
                 break
-        
-        print("\n--- Sweep Summary ---")
-        for p, ret in results.items():
-            status = "SUCCESS" if ret == 0 else "FAILED"
-            print(f"  {p:.2f} ns ({1000.0/p:.1f} MHz): {status}")
-        
-        sys.exit(0 if all(r == 0 for r in results.values()) else 1)
+
+        print("\n" + "=" * 80)
+        print("  Clock Period Sweep QoR Comparison Summary Table")
+        print("=" * 80)
+        print("| Target Freq | Period (ns) | Tag Name | Status | StdCell Area | Setup WNS | Hold WNS | DRC Errors |")
+        print("| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+
+        for r in sweep_results:
+            status_str = "SUCCESS" if r["ret"] == 0 else "FAILED"
+            m = r["metrics"]
+            if m and isinstance(m, dict):
+                area_str = f"{m['area']:,.2f} µm²" if isinstance(m['area'], (int, float)) else str(m['area'])
+                setup_str = f"{m['setup_ws']:+.2f} ns (Vio:{m['setup_vio']})" if isinstance(m['setup_ws'], (int, float)) else str(m['setup_ws'])
+                hold_str = f"{m['hold_ws']:+.2f} ns (Vio:{m['hold_vio']})" if isinstance(m['hold_ws'], (int, float)) else str(m['hold_ws'])
+                drc_str = str(m['drc'])
+            else:
+                area_str, setup_str, hold_str, drc_str = "N/A", "N/A", "N/A", "N/A"
+
+            print(f"| {r['freq_mhz']} MHz | {r['period']:.2f} ns | `{r['tag']}` | {status_str} | {area_str} | {setup_str} | {hold_str} | {drc_str} |")
+        print("=" * 80 + "\n")
+
+        sys.exit(0 if all(r["ret"] == 0 for r in sweep_results) else 1)
+
     else:
-        ret = run_single_pnr(
-            workspace_root, librelane_dir, pdk_root, config_json,
+        ret, _ = run_single_pnr(
+            workspace_root, librelane_dir, pdk_root, target_design_dir, config_json,
             clk_period=args.clk_period, std_cell=args.std_cell, core_util=args.core_util,
             run_tag=args.run_tag, overwrite=args.overwrite,
-            from_step=args.from_step, to_step=args.to_step, dry_run=args.dry_run
+            from_step=args.from_step, to_step=args.to_step,
+            report_qor=args.report_qor, dry_run=args.dry_run
         )
         sys.exit(ret)
 
