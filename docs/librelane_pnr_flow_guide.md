@@ -13,8 +13,8 @@ lsi_test/
 ├── docs/
 │   └── librelane_pnr_flow_guide.md          # 本ガイド
 ├── tools/
-│   ├── report_librelane_qor_phases.py       # QoR集計スクリプト
-│   └── open_librelane_viewer.sh             # GUIビューア起動スクリプト
+│   ├── report_qor_phases.py                 # QoR集計スクリプト
+│   └── open_viewer.sh                       # GUIビューア起動スクリプト
 ├── librelane/                               # LibreLane 本体 (uv環境)
 ├── pdks/                                    # sky130A PDK ディレクトリ
 ├── librelane_designs/                       # LibreLane用デザイン設定フォルダ
@@ -116,7 +116,7 @@ PnR完了後、集計スクリプトを実行して各フェーズ（Synth / Pla
 
 ```bash
 # プロジェクトルートにて実行
-./tools/report_librelane_qor_phases.py librelane_designs/<新規モジュール名>/runs/run_100MHz
+./tools/report_qor_phases.py librelane_designs/<新規モジュール名>/runs/run_100MHz
 ```
 
 ### 出力例:
@@ -145,13 +145,13 @@ PnR完了後、集計スクリプトを実行して各フェーズ（Synth / Pla
 xhost +
 
 # OpenROAD GUI を起動 (配置配線・タイミングパス・ヒートマップの確認)
-./tools/open_librelane_viewer.sh openroad librelane_designs/<新規モジュール名>/config.json run_100MHz
+./tools/open_viewer.sh openroad librelane_designs/<新規モジュール名>/config.json run_100MHz
 
 # KLayout GUI を起動 (GDSII マスクレイアウトの閲覧)
-./tools/open_librelane_viewer.sh klayout librelane_designs/<新規モジュール名>/config.json run_100MHz
+./tools/open_viewer.sh klayout librelane_designs/<新規モジュール名>/config.json run_100MHz
 
 # Magic GUI を起動 (DRC 違反個所の確認)
-./tools/open_librelane_viewer.sh magic librelane_designs/<新規モジュール名>/config.json run_100MHz
+./tools/open_viewer.sh magic librelane_designs/<新規モジュール名>/config.json run_100MHz
 ```
 
 ---

@@ -226,9 +226,9 @@ make syn            # Logic synthesis using Yosys
 make gls_sim        # Gate-Level Simulation
 ```
 
-## 4. Physical Design (LibreLane PnR Setup)
-To configure LibreLane (OpenLane 2) PnR for this module, use the `librelane-setup` skill:
-Ask the agent: "Set up LibreLane for {project_name}".
+## 4. Physical Design (PnR Setup)
+To configure PnR for this module, use the `pnr-setup` skill:
+Ask the agent: "Set up PnR for {project_name}".
 """
     (project_dir / "AGENTS.md").write_text(agents_content)
 

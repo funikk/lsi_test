@@ -5,7 +5,7 @@ import json
 import argparse
 from pathlib import Path
 
-def setup_librelane(module_name: str, clock_period: float = 10.0, clock_port: str = "clk", std_cell: str = "sky130_fd_sc_hd", force: bool = False):
+def setup_pnr(module_name: str, clock_period: float = 10.0, clock_port: str = "clk", std_cell: str = "sky130_fd_sc_hd", force: bool = False):
     root_dir = Path.cwd()
     
     # 1. Check module directory
@@ -55,7 +55,7 @@ def setup_librelane(module_name: str, clock_period: float = 10.0, clock_port: st
     config_path = design_dir / "config.json"
     with open(config_path, "w") as f:
         json.dump(config_data, f, indent=4)
-    print(f"Created/Updated LibreLane config at: {config_path}")
+    print(f"Created/Updated PnR config at: {config_path}")
 
     # 3. Create pin_order.cfg (Pin Placement Order Constraint)
     pin_cfg_content = f"""#N
@@ -99,10 +99,10 @@ set_max_delay 2.0 -from [get_cells -hierarchical *u_reset_sync*u_dff1*] -to [get
 
     print("\nNext steps:")
     print(f"1. Check '{sdc_path}' and adjust input/output delays or module-specific constraints if needed.")
-    print(f"2. Run 'make librelane' inside '{module_dir.name}/'.")
+    print(f"2. Run 'make pnr' inside '{module_dir.name}/'.")
 
 def main():
-    parser = argparse.ArgumentParser(description="Automate LibreLane (OpenLane 2) design setup for a module.")
+    parser = argparse.ArgumentParser(description="Automate PnR design setup for a module.")
     parser.add_argument("--name", "-n", required=True, help="Target module/subproject name (e.g. counter, fifo_top)")
     parser.add_argument("--clk-period", "-c", type=float, default=10.0, help="Clock period in ns (default: 10.0)")
     parser.add_argument("--clk-port", type=str, default="clk", help="Clock port name (default: clk)")
@@ -110,7 +110,7 @@ def main():
     parser.add_argument("--force", action="store_true", help="Force overwrite configuration files")
     args = parser.parse_args()
 
-    setup_librelane(args.name, args.clk_period, args.clk_port, args.std_cell, args.force)
+    setup_pnr(args.name, args.clk_period, args.clk_port, args.std_cell, args.force)
 
 if __name__ == "__main__":
     main()

@@ -77,11 +77,11 @@ make syn
 # Run Gate-Level Simulation using Yosys cell library (results go into gls/)
 make gls_sim
 
-# Run LibreLane PnR flow (physical design)
-make librelane
+# Run PnR flow (physical design)
+make pnr
 
-# Report phase-by-phase LibreLane QoR & runtime table (hh:mm:ss format)
-make librelane_qor
+# Report phase-by-phase QoR & runtime table (hh:mm:ss format)
+make pnr_qor
 
 # Run all verification phases (lint -> presynth_check -> rtl_sim -> syn -> gls_sim)
 make all
@@ -95,10 +95,7 @@ make all
 *   [EDA Setup Guide](docs/open_source_eda_setup.md): Guide for installing tools and running baseline simulations.
 *   [Verilog Best Practices](docs/verilog_best_practices.md): Synthesizable RTL design guidelines.
 *   [Tool Upgrade Guide](docs/upgrade_eda_tools.md): Instruction on compiling newer tool versions or using OSS CAD Suite.
-*   [OpenLane PnR Flow Guide](docs/openlane_pnr_flow_guide.md): Guide for running physical design (PnR) on new modules.
-*   [QoR Comparison Report](docs/qor_comparison_report.md): Performance comparison of different standard cell libraries and clock targets.
-*   [LibreLane Migration Guide](docs/openlane_to_librelane_migration.md): Comparison of OpenLane 1 vs LibreLane (OpenLane 2) and migration instructions.
-*   [LibreLane PnR Flow Guide](docs/librelane_pnr_flow_guide.md): Guide for running physical design (PnR) on new modules using LibreLane.
+*   [PnR Flow Guide](docs/librelane_pnr_flow_guide.md): Guide for running physical design (PnR) on new modules using LibreLane.
 
 ### Subproject Reference Guides (AGENTS.md)
 *   [Counter Project Guide](counter_test/AGENTS.md): Simple 8-bit Counter.

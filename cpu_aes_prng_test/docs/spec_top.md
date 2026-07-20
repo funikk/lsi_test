@@ -40,7 +40,7 @@ graph TD
 1. **`cpu_aes_prng_core.v` (中間階層コアモジュール)**:
    - CPU、AES-DMA サブシステム、および DMEM バスアビータを包含。
    - `imem_*` (命令バス) および `dmem_*` (データ SRAM バス) を外部ピンとして露出。
-   - 大規模 RAM を含まず純粋な論理ゲートのみで構成されるため、**ASIC 論理合成 (Yosys) や OpenLane/LibreLane PnR フローのトップモジュール**として最適。
+   - 大規模 RAM を含まず純粋な論理ゲートのみで構成されるため、**ASIC 論理合成 (Yosys) や PnR フローのトップモジュール**として最適。
 2. **`cpu_aes_prng_top.v` (トップレベル・ラッパーモジュール)**:
    - `cpu_aes_prng_core` に対してオンチップ RAM モジュール（`imem.v`, `dmem.v`）を結線。
    - シミュレーション（RTL_SIM / GLS_SIM）の統合検証トップとして動作。

@@ -13,7 +13,7 @@ description: >
 This skill automates the setup of a new Verilog/SystemVerilog circuit design subproject within the `lsi_test` repository. It creates a standardized directory structure (`docs/`, `rtl/`, `tb/`, `sim/`, `syn/`, `gls/`) along with all necessary automation files (`Makefile`, `syn/run_synth.ys`, `syn/presynth_check.ys`, `AGENTS.md`, `docs/spec.md`, and starter RTL/testbench files).
 
 > [!NOTE]
-> Physical design (PnR / LibreLane) setup under `librelane_designs/` is managed separately by the `librelane-setup` skill.
+> Physical design (PnR) setup under `librelane_designs/` is managed separately by the `pnr-setup` skill.
 
 ## Quick Start
 
@@ -72,7 +72,7 @@ uv run python3 .agents/skills/new-circuit-project/scripts/create_new_project.py 
 1. Edit `rtl/<project_name>.v` to implement your custom synthesizable RTL logic.
 2. Update `tb/tb_<project_name>.v` with test vectors and verification assertions.
 3. Run `make all` or individual make targets to verify linting, simulation, and synthesis.
-4. (Optional) To configure physical design (PnR) for LibreLane, run the `librelane-setup` skill.
+4. (Optional) To configure physical design (PnR) for LibreLane, run the `pnr-setup` skill.
 
 ## Common Mistakes
 

@@ -7,7 +7,7 @@ WORKSPACE_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 VIEWER="${1:-openroad}"
 CONFIG_FILE="${2:-${WORKSPACE_ROOT}/librelane_designs/aes_prng_top/config.json}"
-RUN_TAG="${3:-run_librelane}"
+RUN_TAG="${3:-run_pnr}"
 
 PDK_ROOT="${WORKSPACE_ROOT}/pdks"
 LIBRELANE_DIR="${WORKSPACE_ROOT}/librelane"

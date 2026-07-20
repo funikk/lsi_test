@@ -20,7 +20,7 @@ SYN_YS   = $(SYN_DIR)/run_synth.ys
 SYN_NETLIST = $(SYN_DIR)/mac_array_synth.v
 SIM_CELLS = /usr/share/yosys/simlib.v
 
-.PHONY: all lint presynth_check rtl_sim syn gls_sim librelane librelane_qor clean
+.PHONY: all lint presynth_check rtl_sim syn gls_sim pnr pnr_qor clean
 
 all: lint presynth_check rtl_sim syn gls_sim
 
@@ -48,8 +48,8 @@ gls_sim: syn
 	mv tb_mac_array.vcd $(GLS_DIR)/ || true
 	mv gls_sim.out $(GLS_DIR)/ || true
 
-# 5. LibreLane PnR Flow
-librelane:
+# 5. PnR Flow
+pnr:
 	cd ../librelane && export PDK_ROOT=$$(pwd)/../pdks && export UV_PYTHON_INSTALL_DIR=$$(pwd)/.uv_python && export UV_CACHE_DIR=$$(pwd)/.uv_cache && uv run --python 3.12 python3 -m librelane -m $$(pwd)/.. --dockerized \
 		--hide-progress-bar \
 		--pdk-root $$(pwd)/../pdks \
@@ -58,9 +58,9 @@ librelane:
 		--run-tag run_100MHz \
 		../librelane_designs/mac_array/config.json
 
-# 6. LibreLane QoR Report
-librelane_qor:
-	../tools/report_librelane_qor_phases.py ../librelane_designs/mac_array/runs/run_100MHz
+# 6. PnR QoR Report
+pnr_qor:
+	../tools/report_qor_phases.py ../librelane_designs/mac_array/runs/run_100MHz
 
 # 7. Clean up temporary files
 clean:

@@ -95,11 +95,11 @@ make syn
 # 6. Run Gate-Level Simulation (GLS)
 make gls_sim
 
-# 7. Run LibreLane Physical Design (PnR) flow (100MHz, sky130_fd_sc_hs)
-make librelane
+# 7. Run PnR flow (100MHz, sky130_fd_sc_hs)
+make pnr
 
-# 8. Report phase-by-phase LibreLane QoR & runtime table (hh:mm:ss format)
-make librelane_qor
+# 8. Report phase-by-phase QoR & runtime table (hh:mm:ss format)
+make pnr_qor
 
 # 9. Run all verification steps
 make all

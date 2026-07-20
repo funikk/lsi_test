@@ -29,7 +29,7 @@ SYN_YS   = $(SYN_DIR)/run_synth.ys
 SYN_NETLIST = $(SYN_DIR)/cpu_aes_prng_top_syn.v
 SIM_CELLS = /usr/share/yosys/simlib.v
 
-.PHONY: all firmware lint presynth_check rtl_sim syn gls_sim librelane librelane_qor clean
+.PHONY: all firmware lint presynth_check rtl_sim syn gls_sim pnr pnr_qor clean
 
 all: firmware lint rtl_sim syn gls_sim
 
@@ -57,7 +57,7 @@ gls_sim: syn firmware
 	mv $(SIM_DIR)/tb_cpu_aes_prng.vcd $(GLS_DIR)/ || true
 	mv $(SIM_DIR)/gls_sim.out $(GLS_DIR)/ || true
 
-librelane:
+pnr:
 	cd ../librelane && export PDK_ROOT=$$(pwd)/../pdks && export UV_PYTHON_INSTALL_DIR=$$(pwd)/.uv_python && export UV_CACHE_DIR=$$(pwd)/.uv_cache && uv run --python 3.12 python3 -m librelane -m $$(pwd)/.. --dockerized \
 		--hide-progress-bar \
 		--pdk-root $$(pwd)/../pdks \
@@ -66,8 +66,8 @@ librelane:
 		--run-tag run_100MHz_hs \
 		../librelane_designs/cpu_aes_prng_core/config.json
 
-librelane_qor:
-	../tools/report_librelane_qor_phases.py ../librelane_designs/cpu_aes_prng_core/runs/run_100MHz_hs
+pnr_qor:
+	../tools/report_qor_phases.py ../librelane_designs/cpu_aes_prng_core/runs/run_100MHz_hs
 
 clean:
 	$(MAKE) -C $(FW_DIR) clean

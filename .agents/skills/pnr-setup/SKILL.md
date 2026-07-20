@@ -1,16 +1,16 @@
 ---
-name: librelane-setup
+name: pnr-setup
 description: >-
-  Use when the user asks to set up, configure, or prepare the LibreLane (OpenLane 2) PnR execution environment for a Verilog/SystemVerilog RTL module, or when integrating a new module into physical design. Generates librelane_designs/<module>/config.json, constraint.sdc, updates subproject Makefile with librelane (including --hide-progress-bar) and librelane_qor targets, updates AGENTS.md, and verifies RTL quality with pre-synthesis checks.
+  Use when the user asks to set up, configure, or prepare the PnR execution environment for a Verilog/SystemVerilog RTL module, or when integrating a new module into physical design. Generates librelane_designs/<module>/config.json, constraint.sdc, updates subproject Makefile with pnr (including --hide-progress-bar) and pnr_qor targets, updates AGENTS.md, and verifies RTL quality with pre-synthesis checks.
 ---
 
-# LibreLane Design Setup Skill
+# PnR Design Setup Skill
 
 ## Overview
 
-This skill automates the setup of the **LibreLane** (OpenLane 2) Physical Design (PnR) execution environment for any Verilog / SystemVerilog subproject within the `lsi_test` workspace.
+This skill automates the setup of the Physical Design (PnR) execution environment for any Verilog / SystemVerilog subproject within the `lsi_test` workspace using LibreLane.
 
-It includes automated script execution via `setup_librelane.py` and enforces OpenROAD-compatible SDC timing constraints (`constraint.sdc`).
+It includes automated script execution via `setup_pnr.py` and enforces OpenROAD-compatible SDC timing constraints (`constraint.sdc`).
 
 ---
 
@@ -19,7 +19,7 @@ It includes automated script execution via `setup_librelane.py` and enforces Ope
 To automatically generate `librelane_designs/<MODULE_NAME>/config.json` and `constraint.sdc`:
 
 ```bash
-uv run python3 .agents/skills/librelane-setup/scripts/setup_librelane.py --name <MODULE_NAME> --clk-period 10.0 --std-cell sky130_fd_sc_hd
+uv run python3 .agents/skills/pnr-setup/scripts/setup_pnr.py --name <MODULE_NAME> --clk-period 10.0 --std-cell sky130_fd_sc_hd
 ```
 
 ---
@@ -58,7 +58,7 @@ When invoked, accept or determine the following parameters:
 Run the automation script or generate files under `librelane_designs/<MODULE_NAME>/`:
 
 ```bash
-uv run python3 .agents/skills/librelane-setup/scripts/setup_librelane.py --name <MODULE_NAME> -c 10.0 -s sky130_fd_sc_hd
+uv run python3 .agents/skills/pnr-setup/scripts/setup_pnr.py --name <MODULE_NAME> -c 10.0 -s sky130_fd_sc_hd
 ```
 
 #### `librelane_designs/<MODULE_NAME>/config.json`
@@ -142,17 +142,17 @@ When creating or customizing `librelane_designs/<MODULE_NAME>/constraint.sdc`, a
 
 ### Step 3: Update Subproject Makefile
 
-Update the `Makefile` inside `<MODULE_DIRECTORY>/` to add `librelane` and `librelane_qor` targets:
+Update the `Makefile` inside `<MODULE_DIRECTORY>/` to add `pnr` and `pnr_qor` targets:
 
-1. Update `.PHONY` line to include `librelane librelane_qor`:
+1. Update `.PHONY` line to include `pnr pnr_qor`:
    ```makefile
-   .PHONY: all lint presynth_check rtl_sim syn gls_sim librelane librelane_qor clean
+   .PHONY: all lint presynth_check rtl_sim syn gls_sim pnr pnr_qor clean
    ```
 
-2. Add `librelane` target with `--hide-progress-bar`:
+2. Add `pnr` target with `--hide-progress-bar`:
    ```makefile
-   # LibreLane PnR Flow
-   librelane:
+   # PnR Flow
+   pnr:
    	cd ../librelane && export PDK_ROOT=$$(pwd)/../pdks && export UV_PYTHON_INSTALL_DIR=$$(pwd)/.uv_python && export UV_CACHE_DIR=$$(pwd)/.uv_cache && uv run --python 3.12 python3 -m librelane -m $$(pwd)/.. --dockerized \
    		--hide-progress-bar \
    		--pdk-root $$(pwd)/../pdks \
@@ -162,32 +162,32 @@ Update the `Makefile` inside `<MODULE_DIRECTORY>/` to add `librelane` and `libre
    		../librelane_designs/<MODULE_NAME>/config.json
    ```
 
-3. Add `librelane_qor` target:
+3. Add `pnr_qor` target:
    ```makefile
-   # LibreLane QoR Report
-   librelane_qor:
-   	../tools/report_librelane_qor_phases.py ../librelane_designs/<MODULE_NAME>/runs/run_100MHz
+   # PnR QoR Report
+   pnr_qor:
+   	../tools/report_qor_phases.py ../librelane_designs/<MODULE_NAME>/runs/run_100MHz
    ```
 
 ---
 
 ### Step 4: Update Subproject `AGENTS.md`
 
-Add LibreLane reference links and execution instructions to `<MODULE_DIRECTORY>/AGENTS.md`:
+Add PnR reference links and execution instructions to `<MODULE_DIRECTORY>/AGENTS.md`:
 
 ```markdown
-*   [config.json (LibreLane Config)](../librelane_designs/<MODULE_NAME>/config.json): LibreLane PnR flow configuration.
+*   [config.json (PnR Config)](../librelane_designs/<MODULE_NAME>/config.json): PnR flow configuration.
 *   [constraint.sdc (SDC Timing Constraints)](../librelane_designs/<MODULE_NAME>/constraint.sdc): OpenROAD STA timing constraints.
 ```
 
 And in the **How to Run** section:
 
 ```bash
-# Run LibreLane PnR flow
-make librelane
+# Run PnR flow
+make pnr
 
-# Report LibreLane QoR & runtime summary
-make librelane_qor
+# Report PnR QoR & runtime summary
+make pnr_qor
 ```
 
 ---
@@ -202,5 +202,5 @@ make librelane_qor
 ## Common Mistakes to Avoid
 
 1. **`set_dont_touch` in SDC**: Never use `set_dont_touch` in SDC files.
-2. **Missing `--hide-progress-bar`**: Always include `--hide-progress-bar` in the `librelane` Makefile target.
+2. **Missing `--hide-progress-bar`**: Always include `--hide-progress-bar` in the `pnr` Makefile target.
 3. **Absolute File Paths**: Never hardcode `/home/username/...` in `config.json`. Use `dir::` relative paths.
