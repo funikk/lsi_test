@@ -194,6 +194,32 @@ uv pip install -e .
 uv run python3 -m librelane --help
 ```
 
+### Sky130 PDK のセットアップ手順
+
+LibreLaneによる配置配線（PnR）フローを実行するためには、対象プロセス（本環境では Sky130）の PDK (Process Design Kit) が必要です。
+
+LibreLane では PDK バージョン管理ツール **Ciel** を用いて PDK を管理します。セットアップには以下の2つの方法があります。
+
+#### A. 初回実行時の自動ダウンロード（推奨）
+LibreLane は、指定された PDK ルートに要求されたバージョンの PDK が存在しない場合、初回実行時に自動的に Ciel を呼び出して該当するバージョンの PDK をリモートからダウンロード・ビルドします。
+特に追加の操作は不要で、後述の「LibreLane での PnR 実行コマンド例」を実行するだけで自動セットアップされます。
+
+#### B. `ciel` コマンドによる手動事前セットアップ
+ネットワーク環境の確認や、事前に明示的に PDK を構築しておきたい場合は、以下の手順で手動セットアップを行います。
+
+```bash
+# 1. PDK の配置先（PDK_ROOT）を設定（プロジェクトルートにて実行）
+export PDK_ROOT=$(pwd)/pdks
+
+# 2. librelane ディレクトリへ移動し、ciel コマンドで指定バージョンの PDK をビルド
+cd librelane
+uv run ciel build --pdk-family sky130 --pdk-root ../pdks 0fe599b2afb6708d281543108caf8310912f54af
+```
+
+> [!NOTE]
+> * ハッシュ値 `0fe599b2afb6708d281543108caf8310912f54af` は、本プロジェクトで動作検証済みの `open_pdks` バージョンです。
+> * ビルド完了後、`pdks/sky130A` および `sky130B` へのシンボリックリンクが自動的に生成または更新されます。
+
 ### LibreLane での PnR 実行コマンド例
 
 ```bash
