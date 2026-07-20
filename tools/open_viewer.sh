@@ -17,7 +17,7 @@ if [ ! -d "$LIBRELANE_DIR" ]; then
     exit 1
 fi
 
-# Ensure DISPLAY variable is set and disable X11 access control for Docker GUI
+# Ensure DISPLAY variable is set for GUI
 export DISPLAY="${DISPLAY:-:0}"
 if command -v xhost &>/dev/null; then
     xhost + &>/dev/null || xhost +local:root &>/dev/null || true
@@ -49,8 +49,6 @@ export PDK_ROOT="$PDK_ROOT"
 
 cd "$LIBRELANE_DIR"
 uv run python3 -m librelane \
-    -m "$WORKSPACE_ROOT" \
-    --dockerized \
     --pdk-root "$PDK_ROOT" \
     -p sky130A \
     -s sky130_fd_sc_hs \

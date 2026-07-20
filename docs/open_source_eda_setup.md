@@ -171,7 +171,7 @@ gtkwave tb_counter.vcd &
 本環境では、高速なPythonパッケージマネージャーである **`uv`** を使用して独立したPython環境を構築します。
 
 ### 事前準備
-1. **Docker のインストール**: コンテナ化されたEDAツール群を実行するために Docker が必要です。
+1. **Nix のインストール**: ローカルツールチェーン環境（OpenROAD, Yosys, Magic, KLayout 等）を再現・実行するために Nix パッケージマネージャーが導入されていることを確認します。
 2. **`uv` のインストール**:
    ```bash
    curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -200,12 +200,12 @@ uv run python3 -m librelane --help
 # プロジェクトルート (lsi_test) にて実行
 export PDK_ROOT=$(pwd)/pdks
 
-# aes_prng_top モジュールの PnR 実行（Docker統合モード）
+# aes_prng_top モジュールの PnR 実行（ローカル実行モード）
 cd librelane
-uv run python3 -m librelane -m $(pwd)/.. --dockerized \
+uv run python3 -m librelane \
   --pdk-root $(pwd)/../pdks \
   -p sky130A -s sky130_fd_sc_hs \
-  --run-tag run_librelane \
+  --run-tag run_pnr \
   ../librelane_designs/aes_prng_top/config.json
 ```
 

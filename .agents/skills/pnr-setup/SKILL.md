@@ -149,17 +149,11 @@ Update the `Makefile` inside `<MODULE_DIRECTORY>/` to add `pnr` and `pnr_qor` ta
    .PHONY: all lint presynth_check rtl_sim syn gls_sim pnr pnr_qor clean
    ```
 
-2. Add `pnr` target with `--hide-progress-bar`:
+2. Add `pnr` target:
    ```makefile
    # PnR Flow
    pnr:
-   	cd ../librelane && export PDK_ROOT=$$(pwd)/../pdks && export UV_PYTHON_INSTALL_DIR=$$(pwd)/.uv_python && export UV_CACHE_DIR=$$(pwd)/.uv_cache && uv run --python 3.12 python3 -m librelane -m $$(pwd)/.. --dockerized \
-   		--hide-progress-bar \
-   		--pdk-root $$(pwd)/../pdks \
-   		-p sky130A \
-   		-s sky130_fd_sc_hd \
-   		--run-tag run_100MHz \
-   		../librelane_designs/<MODULE_NAME>/config.json
+   	python3 ../tools/run_pnr.py <MODULE_NAME>
    ```
 
 3. Add `pnr_qor` target:

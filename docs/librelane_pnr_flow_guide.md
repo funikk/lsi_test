@@ -86,26 +86,25 @@ make presynth_check
 
 ---
 
-## 4. ステップ 3: LibreLane PnR フローの実行
+## 4. ステップ 3: LibreLane PnR フローの実行 (`tools/run_pnr.py`)
 
-プロジェクトルート (`lsi_test`) にて、`uv` パッケージマネージャーを介して LibreLane を Docker 統合モードで起動します。
+統合実行スクリプト `tools/run_pnr.py` を使用することで、標準実行だけでなくクロック周波数の変更・セルライブラリ切り替え・スイープ実行・途中ステップからの再開を簡単に行えます。
 
 ```bash
-# プロジェクトルートに移動
-cd $(pwd)
+# ① 標準実行 (デフォルト 100MHz / sky130_fd_sc_hd / 上書き実行)
+python3 tools/run_pnr.py <新規モジュール名>
 
-# PDKルート環境変数の設定
-export PDK_ROOT=$(pwd)/pdks
+# ② クロック周波数を 125MHz (8.0ns) に変更して実行 (タグは自動的に run_125MHz_hd に決定)
+python3 tools/run_pnr.py <新規モジュール名> --clk-period 8.0
 
-# LibreLane ディレクトリに移動してフロー実行
-cd librelane
-uv run python3 -m librelane -m $(pwd)/.. --dockerized \
-  --hide-progress-bar \
-  --pdk-root $(pwd)/../pdks \
-  -p sky130A \
-  -s sky130_fd_sc_hd \
-  --run-tag run_100MHz \
-  ../librelane_designs/<新規モジュール名>/config.json
+# ③ 高速セルライブラリ (hs) を指定して実行
+python3 tools/run_pnr.py <新規モジュール名> --std-cell sky130_fd_sc_hs
+
+# ④ 複数周波数のスイープ連続実行 (10.0ns, 8.0ns, 6.67ns)
+python3 tools/run_pnr.py <新規モジュール名> --sweep-clk 10.0,8.0,6.67
+
+# ⑤ デバッグ用：指定ステップから再開
+python3 tools/run_pnr.py <新規モジュール名> --from-step openroad-detailedplacement
 ```
 
 ---

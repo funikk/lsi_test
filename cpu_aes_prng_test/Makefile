@@ -58,13 +58,7 @@ gls_sim: syn firmware
 	mv $(SIM_DIR)/gls_sim.out $(GLS_DIR)/ || true
 
 pnr:
-	cd ../librelane && export PDK_ROOT=$$(pwd)/../pdks && export UV_PYTHON_INSTALL_DIR=$$(pwd)/.uv_python && export UV_CACHE_DIR=$$(pwd)/.uv_cache && uv run --python 3.12 python3 -m librelane -m $$(pwd)/.. --dockerized \
-		--hide-progress-bar \
-		--pdk-root $$(pwd)/../pdks \
-		-p sky130A \
-		-s sky130_fd_sc_hs \
-		--run-tag run_100MHz_hs \
-		../librelane_designs/cpu_aes_prng_core/config.json
+	python3 ../tools/run_pnr.py cpu_aes_prng_core -s sky130_fd_sc_hs
 
 pnr_qor:
 	../tools/report_qor_phases.py ../librelane_designs/cpu_aes_prng_core/runs/run_100MHz_hs

@@ -50,13 +50,7 @@ gls_sim: syn
 
 # 5. PnR Flow
 pnr:
-	cd ../librelane && export PDK_ROOT=$$(pwd)/../pdks && export UV_PYTHON_INSTALL_DIR=$$(pwd)/.uv_python && export UV_CACHE_DIR=$$(pwd)/.uv_cache && uv run --python 3.12 python3 -m librelane -m $$(pwd)/.. --dockerized \
-		--hide-progress-bar \
-		--pdk-root $$(pwd)/../pdks \
-		-p sky130A \
-		-s sky130_fd_sc_hd \
-		--run-tag run_100MHz \
-		../librelane_designs/counter/config.json
+	python3 ../tools/run_pnr.py counter
 
 # 6. PnR QoR Report
 pnr_qor:
