@@ -4,17 +4,6 @@ This project is a sandbox environment for studying LSI design, logic synthesis, 
 
 ---
 
-
-## Available Specialized Subagents
-本プロジェクトでは以下の専門エージェントが定義されており、必要に応じて互いにタスクを委譲・連携（invoke_subagent / send_message）することが推奨されます。
-* **project_manager**: 全体のタスク分解、オーケストレーション、最終成果物の検収
-* **system_architect**: システムアーキテクチャ設計、仕様策定、HW/SW分割
-* **logic_design**: RTL実装（Verilog）、ブロック統合、Lint確認
-* **logic_verification**: テストベンチ実装、カバレッジ検証、GLS
-* **firmware_design**: ファームウェア（C/アセンブリ）開発、テストベクタ提供
-* **backend_design**: 物理実装（論理合成、配置配線、STA）
-* **methodology_engineer**: 開発フロー自動化、Makefile構築、DevOps
-
 ## 1. Directory Structure
 
 Each design project follows a standard industry directory structure:
@@ -128,8 +117,22 @@ When writing documentation and configuration files (such as `config.json` or Mak
   * For file references in documents and path definitions in configuration files, always use relative paths from the project root (e.g., `docs/verilog_best_practices.md` or `../rtl/picorv32.v`).
   * Utilize the `dir::` notation in configuration files like those for LibreLane.
   * If absolute paths are required in shell scripts, obtain/define them dynamically using `$(pwd)` or environment variables (such as `$WORKSPACE`).
+* **Language Policy**
+  * **Agent-facing documentation (rules, agent configurations, orchestration guidelines)** MUST be written in English to ensure accurate interpretation by LLM agents.
+  * **User-facing documentation (specifications, setup guides, architectural documents)** should be written in Japanese to support the development team.
 
 ## 6. Agent Orchestration & Task Delegation Rules
+
+The following specialized subagents are defined in this project. It is highly recommended to delegate tasks and collaborate with them (using `invoke_subagent` / `send_message`) as necessary.
+
+* **project_manager**: Overall task breakdown, orchestration, and final verification of artifacts.
+* **system_architect**: System architecture design, specification drafting, and HW/SW partitioning.
+* **logic_design**: RTL implementation (Verilog), block integration, and linting.
+* **logic_verification**: Testbench implementation, coverage verification, and GLS.
+* **firmware_design**: Firmware (C/Assembly) development and test vector provision.
+* **backend_design**: Physical implementation (Logic synthesis, PnR, STA).
+* **methodology_engineer**: Development flow automation, Makefile construction, and DevOps.
+
 
 The parent agent (or Project Manager) must strictly adhere to the following rules when assigning tasks to subagents and receiving completion reports:
 
@@ -139,6 +142,5 @@ The parent agent (or Project Manager) must strictly adhere to the following rule
    Do not take a text report of "completed" from a subagent at face value. Always use tools to verify that the artifacts have actually been created or updated in the local filesystem.
 3. **Rejection & Retry**:
    If the actual file is not generated or the command execution log does not exist, the parent agent must not take over and perform the work itself. Demand a retry from the subagent: "The file was not created. Instead of outputting mock text, use your tools to write the file and execute the commands."
-
-4. **サブエージェントの権限担保 (Ensuring Agent Permissions)**:
-   サブエージェントを定義・呼び出す際は、必ずそのタスクに応じたツール実行権限を与えてください。他のエージェントを呼び出す場合は `enable_subagent_tools: true` を、ファイル作成やターミナルコマンド（`run_command`）を実行させる場合は `enable_write_tools: true` を設定しなければ、モック回答の温床となります。
+4. **Ensuring Agent Permissions**:
+   When defining or invoking a subagent, you MUST grant the appropriate tool execution permissions for its tasks. Set `enable_subagent_tools: true` if the subagent needs to invoke other agents, or `enable_write_tools: true` if the subagent must create files or execute terminal commands (`run_command`). Failure to do so will result in mock responses.
