@@ -109,22 +109,22 @@ make all
 
 ## 5. Documentation & Path Guidelines
 
-ドキュメントの作成および設定ファイル（`config.json` や Makefile 等）の記述時は、以下のパス指定ルールを遵守してください。
+When writing documentation and configuration files (such as `config.json` or Makefiles), adhere to the following path specification rules:
 
-* **絶対パスの禁止**:
-  * ホスト環境に依存する絶対パスの記述は行わないでください。
-* **相対パス / プロジェクトルートパスの採用**:
-  * ドキュメント内のファイル参照や設定ファイルのパス定義には、必ずプロジェクトルートからの相対パス（例: `docs/verilog_best_practices.md` や `../rtl/picorv32.v`）を使用してください。
-  * LibreLane などの設定ファイルでは `dir::` 記法を活用してください。
-  * シェルスクリプト等で絶対パスが必要な場合は `$(pwd)` または環境変数（`$WORKSPACE` 等）を用いて動的に取得・定義してください。
+* **Prohibition of Absolute Paths**:
+  * Do not write absolute paths that depend on the host environment.
+* **Adoption of Relative Paths / Project Root Paths**:
+  * For file references in documents and path definitions in configuration files, always use relative paths from the project root (e.g., `docs/verilog_best_practices.md` or `../rtl/picorv32.v`).
+  * Utilize the `dir::` notation in configuration files like those for LibreLane.
+  * If absolute paths are required in shell scripts, obtain/define them dynamically using `$(pwd)` or environment variables (such as `$WORKSPACE`).
 
 ## 6. Agent Orchestration & Task Delegation Rules
 
-親エージェント（またはProject Manager）がサブエージェントにタスクを依頼する際、および完了報告を受け取る際は、以下のルールを厳守してください。
+The parent agent (or Project Manager) must strictly adhere to the following rules when assigning tasks to subagents and receiving completion reports:
 
-1. **完了条件（Definition of Done）の明示**:
-   タスクを依頼する際は、必ず「期待する成果物（ファイルパス）」と「実行すべき検証コマンド（例: `make rtl_sim`）」、および「確認すべき出力結果」をプロンプトに含めてください。
-2. **実ファイルの確認（Verification of Artifacts）**:
-   サブエージェントから「完了した」というテキスト報告を受けた場合、直ちに鵜呑みにしてはいけません。必ずツールを用いて、ローカルファイルシステム上に成果物が実際に作成・更新されているかを確認してください。
-3. **差し戻し（Rejection & Retry）**:
-   実ファイルが生成されていない、またはコマンド実行ログが存在しない場合、親エージェント自身が作業を巻き取って代行してはいけません。「ファイルが作成されていません。モックテキストを出力するのではなく、ツールを用いて実際にファイルを書き出し、コマンドを実行してください」とサブエージェントに差し戻し（リトライ）を要求してください。
+1. **Explicit Definition of Done**:
+   When assigning a task, always include the "expected artifacts (file paths)", "verification commands to run (e.g., `make rtl_sim`)", and "expected outputs to check" in the prompt.
+2. **Verification of Artifacts**:
+   Do not take a text report of "completed" from a subagent at face value. Always use tools to verify that the artifacts have actually been created or updated in the local filesystem.
+3. **Rejection & Retry**:
+   If the actual file is not generated or the command execution log does not exist, the parent agent must not take over and perform the work itself. Demand a retry from the subagent: "The file was not created. Instead of outputting mock text, use your tools to write the file and execute the commands."
