@@ -108,6 +108,41 @@ end
 *   モジュール名とファイル名を一致させる（例: `module my_design` は `my_design.v` に保存）。
 *   パラメータ名は大文字にする (`parameter WIDTH = 8`)。
 
+### ⑥ Reset Synchronizer（リセット同期化回路）と Standard Cell 直置きパターン
+*   **非同期アサート・同期デアサート構造**: 外部入力の非同期リセットは、クロック領域に入る直前で 2 段直列 D-FF により「アサートは非同期・デアサートはクロック同期」させる同期化回路を通すことがメタスタビリティ防止の標準です。
+*   **Standard Cell (S/C) 直置きパターン**:
+    PnR（LibreLane / OpenROAD）でセル名・ピン名を確実に固定し、SDC（タイマ制約）でピンポイント指定を行う場合、スタンダードセル（例: `sky130_fd_sc_hs__dfrtp`）を直接構造記述（直置き）でインスタンス化することが有効です。
+*   **RTLシミュレータ互換モデル**:
+    S/C直置き時、iVerilog や Verilator などの RTL シミュレーション環境で未定義セルエラーにならないよう、`reset_sync.v` 内に `ifndef SKY130_FD_SC_HS__DFRTP_DEFINED` 形式のフォールバックモデルを用意します。
+
+```verilog
+module reset_sync (
+    input  wire clk,
+    input  wire ext_rst_n,
+    output wire sync_rst_n
+);
+    wire rff1;
+
+    // Direct Instantiation of SkyWater 130nm DFF Cell
+    sky130_fd_sc_hs__dfrtp u_dff1 (.CLK(clk), .D(1'b1), .RESET_B(ext_rst_n), .Q(rff1));
+    sky130_fd_sc_hs__dfrtp u_dff2 (.CLK(clk), .D(rff1), .RESET_B(ext_rst_n), .Q(sync_rst_n));
+endmodule
+
+// Fallback Model for RTL Simulators
+`ifndef SKY130_FD_SC_HS__DFRTP_DEFINED
+`define SKY130_FD_SC_HS__DFRTP_DEFINED
+(* keep_hierarchy *)
+module sky130_fd_sc_hs__dfrtp (
+    input wire CLK, D, RESET_B, output reg Q
+);
+    always @(posedge CLK or negedge RESET_B) begin
+        if (!RESET_B) Q <= 1'b0;
+        else          Q <= D;
+    end
+endmodule
+`endif
+```
+
 ---
 
 ## 3. プレ合成チェック (Pre-Synthesis Check) による事前問題抽出

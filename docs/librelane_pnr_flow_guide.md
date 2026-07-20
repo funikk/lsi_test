@@ -166,3 +166,22 @@ xhost +
    すべての最終成果物は `librelane_designs/<新規モジュール名>/runs/<run_tag>/final/` 配下に保存されます。
    * GDSII: `final/gds/<新規モジュール名>.gds`
    * 2Dレンダリング画像: `final/render/<新規モジュール名>.png`
+
+---
+
+## 7. SDC タイミング制約と Reset Synchronizer の記述ルール
+
+OpenROAD / LibreLane 環境においてカスタム SDC (`constraint.sdc`) を記述する際の重要ポイントです。
+
+1. **OpenROAD SDC 互換性 (`set_dont_touch` の回避)**:
+   * OpenSTA (OpenROAD SDC パーサー) では `set_dont_touch` コマンドが認識されず構文エラーとなります。不要な `set_dont_touch` コマンドは SDC から除外してください。
+2. **`set_max_delay` による物理近接自動誘導**:
+   * 2 段 FF（リセット同期化回路等）のセル同士を物理的に隣接・近接配置させたい場合、セル間の遅延上限を極小化する制約を与えます。
+   ```tcl
+   set_max_delay 2.0 -from [get_cells -hierarchical *u_reset_sync*u_dff1*] \
+                     -to   [get_cells -hierarchical *u_reset_sync*u_dff2*]
+   ```
+3. **非同期パス除外とエスケープ階層文字のマッチング**:
+   * 非同期リセットピンには `set_false_path -from [get_ports {rst_n}]` を設定します。
+   * Yosys 合成後ネットリストでは階層区切りがドット（`.`）やエスケープ記法に変換されるため、`-from` / `-to` のセル名指定には `*u_reset_sync*u_dff1*` パターンを使用します。
+

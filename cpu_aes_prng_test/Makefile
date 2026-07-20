@@ -21,6 +21,7 @@ RTL_SRCS = $(RTL_DIR)/picorv32.v \
            $(RTL_DIR)/cpu_aes_prng_core.v \
            $(RTL_DIR)/imem.v \
            $(RTL_DIR)/dmem.v \
+           $(RTL_DIR)/reset_sync.v \
            $(RTL_DIR)/cpu_aes_prng_top.v
 
 TB_SRCS  = $(TB_DIR)/tb_cpu_aes_prng.v

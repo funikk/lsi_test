@@ -27,13 +27,23 @@ module cpu_aes_prng_core (
     wire [3:0]  cpu_mem_wstrb;
     wire [31:0] cpu_mem_rdata;
 
+    // Synchronized Reset Wire
+    wire sync_rst_n;
+
+    // Reset Synchronizer (Asynchronous Assert, Synchronous Deassert)
+    reset_sync u_reset_sync (
+        .clk(clk),
+        .ext_rst_n(rst_n),
+        .sync_rst_n(sync_rst_n)
+    );
+
     // Instantiate PicoRV32 RISC-V CPU Core
     picorv32 #(
         .PROGADDR_RESET(32'h0000_0000),
         .STACKADDR(32'h0000_0800)
     ) u_cpu (
         .clk(clk),
-        .resetn(rst_n),
+        .resetn(sync_rst_n),
         .trap(trap_out),
         .mem_valid(cpu_mem_valid),
         .mem_instr(cpu_mem_instr),
@@ -80,7 +90,7 @@ module cpu_aes_prng_core (
     // AES DMA Subsystem Instance
     aes_dma_subsys u_subsys (
         .clk(clk),
-        .rst_n(rst_n),
+        .rst_n(sync_rst_n),
         .mmio_valid(cpu_mmio_valid),
         .mmio_wstrb(cpu_mem_wstrb),
         .mmio_addr(cpu_mem_addr),

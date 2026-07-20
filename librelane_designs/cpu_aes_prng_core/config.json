@@ -6,6 +6,7 @@
         "dir::../../cpu_aes_prng_test/rtl/lfsr_prng_ctrl.v",
         "dir::../../cpu_aes_prng_test/rtl/aes_dma_subsys.v",
         "dir::../../cpu_aes_prng_test/rtl/picorv32.v",
+        "dir::../../cpu_aes_prng_test/rtl/reset_sync.v",
         "dir::../../cpu_aes_prng_test/rtl/cpu_aes_prng_core.v"
     ],
     "CLOCK_PERIOD": 10.0,

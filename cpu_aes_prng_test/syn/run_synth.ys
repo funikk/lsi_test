@@ -7,6 +7,7 @@ read_verilog ../rtl/aes_dma_subsys.v
 read_verilog ../rtl/cpu_aes_prng_core.v
 read_verilog ../rtl/imem.v
 read_verilog ../rtl/dmem.v
+read_verilog ../rtl/reset_sync.v
 read_verilog ../rtl/cpu_aes_prng_top.v
 
 # override RAM size parameters for fast gate-level logic synthesis
