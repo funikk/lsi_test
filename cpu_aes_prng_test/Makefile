@@ -26,7 +26,7 @@ RTL_SRCS = $(RTL_DIR)/picorv32.v \
 
 TB_SRCS  = $(TB_DIR)/tb_cpu_aes_prng.v
 SYN_YS   = $(SYN_DIR)/run_synth.ys
-SYN_NETLIST = $(SYN_DIR)/cpu_aes_prng_top_synth.v
+SYN_NETLIST = $(SYN_DIR)/cpu_aes_prng_top_syn.v
 SIM_CELLS = /usr/share/yosys/simlib.v
 
 .PHONY: all firmware lint presynth_check rtl_sim syn gls_sim librelane librelane_qor clean
@@ -73,5 +73,5 @@ clean:
 	$(MAKE) -C $(FW_DIR) clean
 	rm -f $(SIM_DIR)/rtl_sim.out $(SIM_DIR)/tb_cpu_aes_prng.vcd $(SIM_DIR)/firmware.hex
 	rm -f $(GLS_DIR)/gls_sim.out $(GLS_DIR)/tb_cpu_aes_prng.vcd
-	rm -f $(SYN_DIR)/cpu_aes_prng_top_synth.v $(SYN_DIR)/firmware.hex
+	rm -f $(SYN_DIR)/cpu_aes_prng_top_syn.v $(SYN_DIR)/cpu_aes_prng_top_synth.v $(SYN_DIR)/firmware.hex
 

@@ -27,4 +27,4 @@ opt_clean
 stat
 
 # write synthesizable netlist
-write_verilog -noattr cpu_aes_prng_top_synth.v
+write_verilog -noattr cpu_aes_prng_top_syn.v
