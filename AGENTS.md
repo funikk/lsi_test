@@ -142,5 +142,5 @@ The parent agent (or Project Manager) must strictly adhere to the following rule
    Do not take a text report of "completed" from a subagent at face value. Always use tools to verify that the artifacts have actually been created or updated in the local filesystem.
 3. **Rejection & Retry**:
    If the actual file is not generated or the command execution log does not exist, the parent agent must not take over and perform the work itself. Demand a retry from the subagent: "The file was not created. Instead of outputting mock text, use your tools to write the file and execute the commands."
-4. **Ensuring Agent Permissions**:
-   When defining or invoking a subagent, you MUST grant the appropriate tool execution permissions for its tasks. Set `enable_subagent_tools: true` if the subagent needs to invoke other agents, or `enable_write_tools: true` if the subagent must create files or execute terminal commands (`run_command`). Failure to do so will result in mock responses.
+4. **Ensuring Agent Permissions (Dynamic Definition Required)**:
+   Do NOT simply invoke subagents using pre-existing static definitions if they require tool access. You MUST dynamically define the subagent first using the `define_subagent` tool and explicitly set `enable_write_tools: true` (for file/command execution) or `enable_subagent_tools: true` (for nested invocation). After successful definition, you may invoke it. Failure to dynamically assign permissions will result in a read-only agent and mock responses.
