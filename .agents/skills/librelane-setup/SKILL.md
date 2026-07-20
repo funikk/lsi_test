@@ -1,7 +1,7 @@
 ---
 name: librelane-setup
 description: >-
-  Use when the user asks to set up, configure, or prepare the LibreLane (OpenLane 2) PnR execution environment for a Verilog/SystemVerilog RTL module, or when integrating a new module into physical design. Generates librelane_designs/<module>/config.json, updates subproject Makefile with librelane (including --hide-progress-bar) and librelane_qor targets, updates AGENTS.md, and verifies RTL quality with pre-synthesis checks.
+  Use when the user asks to set up, configure, or prepare the LibreLane (OpenLane 2) PnR execution environment for a Verilog/SystemVerilog RTL module, or when integrating a new module into physical design. Generates librelane_designs/<module>/config.json, constraint.sdc, updates subproject Makefile with librelane (including --hide-progress-bar) and librelane_qor targets, updates AGENTS.md, and verifies RTL quality with pre-synthesis checks.
 ---
 
 # LibreLane Design Setup Skill
@@ -10,7 +10,17 @@ description: >-
 
 This skill automates the setup of the **LibreLane** (OpenLane 2) Physical Design (PnR) execution environment for any Verilog / SystemVerilog subproject within the `lsi_test` workspace.
 
-When requested to create or configure a LibreLane environment for a module, follow this protocol.
+It includes automated script execution via `setup_librelane.py` and enforces OpenROAD-compatible SDC timing constraints (`constraint.sdc`).
+
+---
+
+## Quick Start (Automated Script)
+
+To automatically generate `librelane_designs/<MODULE_NAME>/config.json` and `constraint.sdc`:
+
+```bash
+uv run python3 .agents/skills/librelane-setup/scripts/setup_librelane.py --name <MODULE_NAME> --clk-period 10.0 --std-cell sky130_fd_sc_hd
+```
 
 ---
 
@@ -26,7 +36,7 @@ When invoked, accept or determine the following parameters:
 6. **`PL_TARGET_DENSITY_PCT`** (Optional, Default: `45` %): Target placement density percentage.
 
 > [!NOTE]
-> If any optional parameter is omitted by the user, apply the default value specified above and explicitly list the applied defaults in the final summary report.
+> If any optional parameter is omitted by the user, apply default values and explicitly list applied defaults in the summary report.
 
 ---
 
@@ -34,24 +44,24 @@ When invoked, accept or determine the following parameters:
 
 ### Step 1: RTL Inspection & Pre-Synthesis Quality Check
 
-1. Inspect top-level RTL file in `<MODULE_NAME>_test/rtl/` or `<MODULE_NAME>/rtl/` to confirm:
-   - Top-level module name (`DESIGN_NAME`)
-   - Clock port name (`CLOCK_PORT`)
-   - All Verilog source files required for synthesis
+1. Inspect top-level RTL file in `<MODULE_NAME>_test/rtl/` or `<MODULE_NAME>/rtl/` to confirm top-level module name, clock port, and Verilog sources.
 2. Run pre-synthesis quality check:
    ```bash
    cd <MODULE_DIRECTORY> && make presynth_check
    ```
-3. **Error Handling**:
-   - If minor discrepancies (e.g., clock port named `clock` or `clk_i` instead of `clk`) are found, auto-adjust `CLOCK_PORT` accordingly.
-   - If critical synthesis errors (e.g. multiple drivers, unmapped latches) occur, report the error details to the user and suggest fixes before proceeding.
+3. Auto-adjust parameters if minor differences exist, or report critical synthesis errors to the user.
 
 ---
 
-### Step 2: Create `config.json` Configuration File
+### Step 2: Create `config.json` and `constraint.sdc`
 
-Create the configuration file at `librelane_designs/<MODULE_NAME>/config.json`.
+Run the automation script or generate files under `librelane_designs/<MODULE_NAME>/`:
 
+```bash
+uv run python3 .agents/skills/librelane-setup/scripts/setup_librelane.py --name <MODULE_NAME> -c 10.0 -s sky130_fd_sc_hd
+```
+
+#### `librelane_designs/<MODULE_NAME>/config.json`
 ```json
 {
     "DESIGN_NAME": "<MODULE_NAME>",
@@ -64,6 +74,8 @@ Create the configuration file at `librelane_designs/<MODULE_NAME>/config.json`.
     "CLOCK_NET": "ref::$CLOCK_PORT",
     "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
     "STD_CELL_LIBRARY_OPT": "sky130_fd_sc_hd",
+    "FP_PIN_ORDER_CFG": "dir::pin_order.cfg",
+    "BASE_SDC_FILE": "dir::constraint.sdc",
     "pdk::sky130*": {
         "FP_CORE_UTIL": 40,
         "PL_TARGET_DENSITY_PCT": 45,
@@ -73,7 +85,58 @@ Create the configuration file at `librelane_designs/<MODULE_NAME>/config.json`.
 ```
 
 > [!IMPORTANT]
-> Always use `dir::` relative paths in `VERILOG_FILES` to maintain project portability. Never use absolute paths (`/home/...`).
+> Always use `dir::` relative paths in `VERILOG_FILES`, `FP_PIN_ORDER_CFG`, and `BASE_SDC_FILE` to maintain project portability. Never use absolute paths (`/home/...`).
+
+---
+
+## Pin Placement Order Guidelines (`pin_order.cfg`)
+
+To control the physical sides/edges (North, South, East, West) where I/O pin ports are placed on the die boundary, create `librelane_designs/<MODULE_NAME>/pin_order.cfg`:
+
+```text
+#N
+clk
+rst_n
+
+#S
+trap_out
+
+#E
+dmem_.*
+out_.*
+
+#W
+imem_.*
+in_.*
+```
+
+- **Side Identifiers**: `#N` (North / Top), `#S` (South / Bottom), `#E` (East / Right), `#W` (West / Left).
+- **Regex Matching**: Use regular expressions (e.g. `dmem_.*`) to match bus signals.
+- **Reference in `config.json`**: Add `"FP_PIN_ORDER_CFG": "dir::pin_order.cfg"`.
+
+---
+
+## SDC Timing Constraints Guidelines (OpenROAD Compatibility)
+
+When creating or customizing `librelane_designs/<MODULE_NAME>/constraint.sdc`, adhere strictly to these rules:
+
+### 1. Avoid `set_dont_touch` (OpenSTA Incompatibility)
+- **Do NOT use `set_dont_touch`** in SDC files. OpenROAD's OpenSTA parser will throw a syntax error (`invalid command name "set_dont_touch"`).
+
+### 2. Auto-Guide Physical Proximity using `set_max_delay`
+- To force OpenROAD Placement engines to place 2-stage Flip-Flops (e.g. Reset Synchronizer cells) in physical proximity, set a tight `set_max_delay` constraint between them:
+  ```tcl
+  set_max_delay 2.0 -from [get_cells -hierarchical *u_reset_sync*u_dff1*] -to [get_cells -hierarchical *u_reset_sync*u_dff2*]
+  ```
+
+### 3. Handle Escaped Hierarchical Cell Names
+- Yosys netlists escape hierarchical instance names with dots/backslashes (e.g., `\u_reset_sync.u_dff1 `). Always use wildcard pattern matching (`*u_reset_sync*u_dff1*`) in `-from` / `-to` arguments.
+
+### 4. False Path for Asynchronous Inputs
+- Set false paths for external asynchronous inputs (like reset):
+  ```tcl
+  set_false_path -from [get_ports {rst_n}]
+  ```
 
 ---
 
@@ -114,6 +177,7 @@ Add LibreLane reference links and execution instructions to `<MODULE_DIRECTORY>/
 
 ```markdown
 *   [config.json (LibreLane Config)](../librelane_designs/<MODULE_NAME>/config.json): LibreLane PnR flow configuration.
+*   [constraint.sdc (SDC Timing Constraints)](../librelane_designs/<MODULE_NAME>/constraint.sdc): OpenROAD STA timing constraints.
 ```
 
 And in the **How to Run** section:
@@ -130,16 +194,13 @@ make librelane_qor
 
 ### Step 5: Verify & Report Results
 
-1. Verify that `librelane_designs/<MODULE_NAME>/config.json`, `Makefile`, and `AGENTS.md` are correctly formatted.
-2. Present a concise summary to the user including:
-   - Paths to created/modified files (using `file://` markdown links).
-   - Applied constraints and default values (e.g. `CLOCK_PERIOD`, `CLOCK_PORT`, `STD_CELL_LIBRARY`).
-   - Instructions on how to run `make librelane` and `make librelane_qor`.
+1. Verify formatting of `config.json`, `constraint.sdc`, `Makefile`, and `AGENTS.md`.
+2. Present a concise summary to the user including file links, applied constraints, and execution instructions.
 
 ---
 
 ## Common Mistakes to Avoid
 
-1. **Missing `--hide-progress-bar`**: Always include `--hide-progress-bar` in the `librelane` Makefile target to avoid bloated terminal logs.
-2. **Absolute File Paths**: Never hardcode `/home/username/...` in `config.json`. Use `dir::` relative paths.
-3. **Incorrect Tab Indentation**: Ensure Makefile recipe lines use tab characters (`\t`), not spaces.
+1. **`set_dont_touch` in SDC**: Never use `set_dont_touch` in SDC files.
+2. **Missing `--hide-progress-bar`**: Always include `--hide-progress-bar` in the `librelane` Makefile target.
+3. **Absolute File Paths**: Never hardcode `/home/username/...` in `config.json`. Use `dir::` relative paths.
