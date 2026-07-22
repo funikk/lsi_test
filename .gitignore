@@ -20,19 +20,13 @@ librelane_designs/**/runs/
 *.vvp
 *.log
 *.out
+*_gate.v
+*_syn.v
 
 # sim/, syn/, gls/ ディレクトリ内の動的生成物
-*/sim/*.vcd
-*/sim/*.out
-*/sim/*.log
-*/sim/*_sim
-*/gls/*.vcd
-*/gls/*.out
-*/gls/*.log
-*/gls/*_gls
-*/syn/*.log
-*/syn/*.json
-*/syn/*_syn.v
+**/sim/*
+**/syn/*
+**/gls/*
 
 # ==========================================
 # 4. ファームウェアビルド生成物

@@ -1,74 +1,83 @@
-# Makefile for CPU + AES PRNG project
+# Multi-Developer Modular Dispatch Makefile for cpu_aes_prng_test
 
-VERILATOR = verilator
-IVERILOG  = iverilog
-VVP       = vvp
-YOSYS     = yosys
-PYTHON    = python3
+BLOCKS_DIR := blocks
+BLOCK_DIRS := $(wildcard $(BLOCKS_DIR)/*)
+BLOCK_NAMES := $(notdir $(BLOCK_DIRS))
+UNIT_SIM_TARGETS := $(addprefix unit_sim_,$(BLOCK_NAMES))
+TOP_DIR    := top
+FW_DIR     := firmware
 
-RTL_DIR = rtl
-TB_DIR  = tb
-SIM_DIR = sim
-SYN_DIR = syn
-GLS_DIR = gls
-FW_DIR  = firmware
+.PHONY: all help firmware unit_sim $(UNIT_SIM_TARGETS) block_sim block_syn top_sim rtl_sim top_syn syn gls_sim lint presynth_check pnr pnr_qor clean
 
-RTL_SRCS = $(RTL_DIR)/picorv32.v \
-           $(RTL_DIR)/aes_sbox.v \
-           $(RTL_DIR)/aes_core.v \
-           $(RTL_DIR)/lfsr_prng_ctrl.v \
-           $(RTL_DIR)/aes_dma_subsys.v \
-           $(RTL_DIR)/cpu_aes_prng_core.v \
-           $(RTL_DIR)/imem.v \
-           $(RTL_DIR)/dmem.v \
-           $(RTL_DIR)/reset_sync.v \
-           $(RTL_DIR)/cpu_aes_prng_top.v
+all: firmware unit_sim top_sim syn gls_sim
 
-TB_SRCS   = $(TB_DIR)/tb_cpu_aes_prng.v
-AES_TB    = $(TB_DIR)/tb_aes_core.v
-PRNG_TB   = $(TB_DIR)/tb_lfsr_prng_ctrl.v
-
-SYN_YS   = $(SYN_DIR)/run_synth.ys
-SYN_NETLIST = $(SYN_DIR)/cpu_aes_prng_top_syn.v
-SIM_CELLS = /usr/share/yosys/simlib.v
-
-.PHONY: all firmware lint presynth_check rtl_sim unit_sim test_aes test_prng syn gls_sim pnr pnr_qor clean
-
-all: firmware lint unit_sim rtl_sim syn gls_sim
+help:
+	@echo "Multi-Developer Project Automation Makefile (cpu_aes_prng_test)"
+	@echo "---------------------------------------------------"
+	@echo "make unit_sim           : Run unit simulations for all blocks sequentially"
+	@echo "make -j unit_sim        : Run unit simulations for all blocks in PARALLEL (Multi-core)"
+	@echo "make BLOCK=<name> block_sim : Run unit simulation for target block (e.g. BLOCK=aes_core)"
+	@echo "make BLOCK=<name> block_syn : Run Out-of-Context synthesis for target block"
+	@echo "make top_sim (rtl_sim)  : Run top-level system integration simulation"
+	@echo "make top_syn (syn)      : Run full-chip synthesis"
+	@echo "make gls_sim             : Run Gate-Level Simulation"
+	@echo "make lint               : Run Verilator lint across all blocks and top"
+	@echo "make presynth_check     : Run fast Yosys pre-synthesis checks across all modules"
+	@echo "make firmware           : Compile RISC-V C firmware"
+	@echo "make clean              : Clean temporary files in all blocks and top"
 
 firmware:
 	$(MAKE) -C $(FW_DIR)
-	cp $(FW_DIR)/firmware.hex $(SIM_DIR)/firmware.hex
-	cp $(FW_DIR)/firmware.hex $(SYN_DIR)/firmware.hex
+
+unit_sim: $(UNIT_SIM_TARGETS)
+
+$(UNIT_SIM_TARGETS): unit_sim_%:
+	@echo "==================================================="
+	@echo "[RUNNING UNIT SIM] Sub-block: $*"
+	@echo "==================================================="
+	$(MAKE) -C $(BLOCKS_DIR)/$* unit_sim
+
+block_sim:
+ifndef BLOCK
+	$(error BLOCK is not defined. Usage: make BLOCK=aes_core block_sim)
+endif
+	@echo "[TARGETED BLOCK SIM] Block: $(BLOCK)"
+	$(MAKE) -C $(BLOCKS_DIR)/$(BLOCK) unit_sim
+
+block_syn:
+ifndef BLOCK
+	$(error BLOCK is not defined. Usage: make BLOCK=aes_core block_syn)
+endif
+	@echo "[TARGETED BLOCK SYNTHESIS] Block: $(BLOCK)"
+	$(MAKE) -C $(BLOCKS_DIR)/$(BLOCK) syn
+
+top_sim rtl_sim: firmware
+	@echo "==================================================="
+	@echo "[RUNNING SYSTEM INTEGRATION SIMULATION]"
+	@echo "==================================================="
+	$(MAKE) -C $(TOP_DIR) rtl_sim
+
+top_syn syn: firmware
+	@echo "==================================================="
+	@echo "[RUNNING FULL CHIP SYNTHESIS]"
+	@echo "==================================================="
+	$(MAKE) -C $(TOP_DIR) syn
+
+gls_sim: firmware
+	@echo "==================================================="
+	@echo "[RUNNING GATE-LEVEL SIMULATION]"
+	@echo "==================================================="
+	$(MAKE) -C $(TOP_DIR) gls_sim
 
 lint:
-	$(VERILATOR) --lint-only -Wall -Werror-MULTIDRIVEN -Wno-fatal $(RTL_SRCS)
+	@for dir in $(BLOCK_DIRS) $(TOP_DIR); do \
+		$(MAKE) -C $$dir lint || exit 1; \
+	done
 
 presynth_check:
-	cd $(SYN_DIR) && $(YOSYS) -s presynth_check.ys
-
-unit_sim: test_aes test_prng
-
-test_aes:
-	cd $(SIM_DIR) && $(IVERILOG) -o test_aes.out ../$(AES_TB) ../$(RTL_DIR)/aes_core.v ../$(RTL_DIR)/aes_sbox.v
-	cd $(SIM_DIR) && $(VVP) test_aes.out
-
-test_prng:
-	cd $(SIM_DIR) && $(IVERILOG) -o test_prng.out ../$(PRNG_TB) ../$(RTL_DIR)/lfsr_prng_ctrl.v
-	cd $(SIM_DIR) && $(VVP) test_prng.out
-
-rtl_sim: firmware
-	cd $(SIM_DIR) && $(IVERILOG) -o rtl_sim.out $(addprefix ../, $(TB_SRCS)) $(addprefix ../, $(RTL_SRCS))
-	cd $(SIM_DIR) && $(VVP) rtl_sim.out
-
-syn: firmware
-	cd $(SYN_DIR) && $(YOSYS) -s run_synth.ys
-
-gls_sim: syn firmware
-	cd $(SIM_DIR) && $(IVERILOG) -DGATE_SIM -o gls_sim.out ../$(TB_SRCS) ../$(SYN_NETLIST) $(SIM_CELLS)
-	cd $(SIM_DIR) && $(VVP) gls_sim.out
-	mv $(SIM_DIR)/tb_cpu_aes_prng.vcd $(GLS_DIR)/ || true
-	mv $(SIM_DIR)/gls_sim.out $(GLS_DIR)/ || true
+	@for dir in $(BLOCK_DIRS) $(TOP_DIR); do \
+		$(MAKE) -C $$dir presynth_check || exit 1; \
+	done
 
 pnr:
 	python3 ../tools/run_pnr.py cpu_aes_prng_core -s sky130_fd_sc_hs
@@ -78,6 +87,6 @@ pnr_qor:
 
 clean:
 	$(MAKE) -C $(FW_DIR) clean
-	rm -f $(SIM_DIR)/rtl_sim.out $(SIM_DIR)/test_aes.out $(SIM_DIR)/test_prng.out $(SIM_DIR)/tb_cpu_aes_prng.vcd $(SIM_DIR)/firmware.hex
-	rm -f $(GLS_DIR)/gls_sim.out $(GLS_DIR)/tb_cpu_aes_prng.vcd
-	rm -f $(SYN_DIR)/cpu_aes_prng_top_syn.v $(SYN_DIR)/cpu_aes_prng_top_synth.v $(SYN_DIR)/firmware.hex
+	@for dir in $(BLOCK_DIRS) $(TOP_DIR); do \
+		$(MAKE) -C $$dir clean; \
+	done

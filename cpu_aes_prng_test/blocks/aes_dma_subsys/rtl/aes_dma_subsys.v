@@ -1,3 +1,7 @@
+/* verilator lint_off UNUSEDSIGNAL */
+/* verilator lint_off WIDTHEXPAND */
+/* verilator lint_off WIDTHTRUNC */
+
 module aes_dma_subsys (
     input wire clk,
     input wire rst_n,
@@ -162,7 +166,7 @@ module aes_dma_subsys (
                         if (!dma_valid) begin
                             dma_valid <= 1'b1;
                             dma_wstrb <= 4'b0000;
-                            dma_addr  <= curr_src_addr + {30'b0, word_cnt, 2'b00};
+                            dma_addr  <= curr_src_addr + {28'b0, word_cnt, 2'b00};
                         end else if (dma_ready) begin
                             dma_valid <= 1'b0;
                             case (word_cnt)
@@ -201,7 +205,7 @@ module aes_dma_subsys (
                         if (!dma_valid) begin
                             dma_valid <= 1'b1;
                             dma_wstrb <= 4'b1111;
-                            dma_addr  <= curr_dst_addr + {30'b0, word_cnt, 2'b00};
+                            dma_addr  <= curr_dst_addr + {28'b0, word_cnt, 2'b00};
                             case (word_cnt)
                                 2'd0: dma_wdata <= aes_out_buf[ 31:  0];
                                 2'd1: dma_wdata <= aes_out_buf[ 63: 32];

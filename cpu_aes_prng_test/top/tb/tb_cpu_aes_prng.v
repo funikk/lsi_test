@@ -16,23 +16,6 @@ module tb_cpu_aes_prng;
     // Clock Generation (100MHz -> 10ns period)
     always #5 clk = ~clk;
 
-    /*
-    always @(posedge clk) begin
-        if (u_dut.cpu_mem_valid && u_dut.cpu_mem_ready) begin
-            if (u_dut.cpu_mem_instr)
-                $display("[TRACE PC] PC = 0x%08h, Instr = 0x%08h", u_dut.cpu_mem_addr, u_dut.cpu_mem_rdata);
-            else if (u_dut.cpu_mem_wstrb != 4'b0)
-                $display("[TRACE WRITE] Addr = 0x%08h, Data = 0x%08h", u_dut.cpu_mem_addr, u_dut.cpu_mem_wdata);
-            else
-                $display("[TRACE READ] Addr = 0x%08h, Data = 0x%08h", u_dut.cpu_mem_addr, u_dut.cpu_mem_rdata);
-        end
-        if (trap_out) begin
-            $display("[TB ERROR] TRAP asserted at PC = 0x%08h!", u_dut.cpu_mem_addr);
-            $finish;
-        end
-    end
-    */
-
     integer cycle_count;
 
     initial begin

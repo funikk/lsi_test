@@ -1,0 +1,10 @@
+../common/rtl/imem.v
+../common/rtl/dmem.v
+../common/rtl/reset_sync.v
+../blocks/picorv32_cpu/rtl/picorv32.v
+../blocks/aes_core/rtl/aes_sbox.v
+../blocks/aes_core/rtl/aes_core.v
+../blocks/lfsr_prng/rtl/lfsr_prng_ctrl.v
+../blocks/aes_dma_subsys/rtl/aes_dma_subsys.v
+rtl/cpu_aes_prng_core.v
+rtl/cpu_aes_prng_top.v

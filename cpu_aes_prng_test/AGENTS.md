@@ -1,6 +1,7 @@
 # CPU + AES/PRNG Motif Circuit Subproject Guide (`cpu_aes_prng_test`)
 
 This directory (`cpu_aes_prng_test/`) contains an integrated LSI design combining a 32-bit RISC-V CPU core (PicoRV32), a shared data SRAM (`dmem`), an instruction RAM (`imem`), and an AES-128 / LFSR PRNG DMA subsystem for dynamic IR-Drop power grid stress testing.
+It is organized into the **Multi-Block Parallel Development Architecture** (`blocks/`, `common/`, `top/`).
 
 ---
 
@@ -9,42 +10,46 @@ This directory (`cpu_aes_prng_test/`) contains an integrated LSI design combinin
 ```text
 cpu_aes_prng_test/
 ├── AGENTS.md                  # Project overview and developer guide (this file)
-├── Makefile                   # Top-level build & verification automation Makefile
+├── Makefile                   # Top-level dispatch build & verification Makefile
+├── blocks/                    # Independent sub-block sandboxes
+│   ├── aes_core/              # Sub-block 1: AES-128 Encryption Core (Iterative + S-box)
+│   │   ├── rtl/ (aes_core.v, aes_sbox.v)
+│   │   ├── tb/  (tb_aes_core.v - FIPS-197 unit testbench)
+│   │   ├── Makefile, filelist.f, AGENTS.md
+│   │   └── sim/, syn/
+│   ├── lfsr_prng/             # Sub-block 2: 128-bit LFSR PRNG Generator
+│   │   ├── rtl/ (lfsr_prng_ctrl.v)
+│   │   ├── tb/  (tb_lfsr_prng_ctrl.v - Seed load & shift unit testbench)
+│   │   ├── Makefile, filelist.f, AGENTS.md
+│   │   └── sim/, syn/
+│   ├── aes_dma_subsys/        # Sub-block 3: AES-128 DMA Subsystem & MMIO
+│   │   ├── rtl/ (aes_dma_subsys.v)
+│   │   ├── tb/  (tb_aes_dma_subsys.v - MMIO & DMA unit testbench)
+│   │   ├── Makefile, filelist.f, AGENTS.md
+│   │   └── sim/, syn/
+│   └── picorv32_cpu/          # Sub-block 4: PicoRV32 RISC-V CPU Core
+│       ├── rtl/ (picorv32.v)
+│       ├── tb/  (tb_picorv32.v - Memory fetch handshake unit testbench)
+│       ├── Makefile, filelist.f, AGENTS.md
+│       └── sim/, syn/
+├── common/                    # Shared modules & memory primitives
+│   └── rtl/ (imem.v, dmem.v, reset_sync.v)
 ├── docs/                      # Sub-block technical specifications & licenses
 │   ├── spec_top.md            # Top-level architecture, interconnect, and memory map
 │   ├── spec_picorv32_cpu.md   # PicoRV32 RISC-V CPU core specification
 │   ├── spec_aes_dma_subsys.md # AES-DMA subsystem & MMIO register map specification
 │   ├── spec_lfsr_prng.md      # 128-bit LFSR PRNG specification
-│   ├── spec_aes_core.md       # Iterative AES-128 encryption core & S-box specification
-│   ├── spec_memories.md       # Instruction RAM (imem) & Shared Data SRAM (dmem) specification
-│   └── licenses_and_citations.md # External IP licenses & citation documentation
-├── rtl/                       # Synthesizable RTL Verilog source files
-│   ├── picorv32.v             # PicoRV32 32-bit RISC-V CPU core
-│   ├── aes_sbox.v             # Standard AES S-box lookup logic
-│   ├── aes_core.v             # Iterative AES-128 core with 20 parallel S-boxes
-│   ├── lfsr_prng_ctrl.v       # 128-bit LFSR PRNG (seed load & CPU readback)
-│   ├── aes_dma_subsys.v       # MMIO, DMA engine, line buffer, and load mode logic
-│   ├── imem.v                 # Instruction Memory (loading firmware.hex)
-│   ├── dmem.v                 # Single-port Data SRAM (shared between CPU & DMA)
-│   └── cpu_aes_prng_top.v     # Top-level module connecting CPU, memories, & subsystem
+│   ├── spec_aes_core.md       # Iterative AES-128 encryption core specification
+│   ├── spec_memories.md       # Instruction RAM & Shared Data SRAM specification
+│   └── licenses_and_citations.md # External IP licenses
 ├── firmware/                  # RISC-V C Firmware Build Infrastructure
-│   ├── main.c                 # C source code controlling all 5 requirements
-│   ├── start.S                # RISC-V startup assembly (sets sp, calls main)
-│   ├── sections.lds           # Linker script for RV32I memory placement
-│   ├── bin2hex.py             # Converts binary elf output to 32-bit Verilog hex
-│   ├── Makefile               # Standalone Makefile for firmware compilation
-│   └── gen_firmware.py        # Python wrapper script calling GCC & bin2hex
-├── tb/                        # Testbench
-│   ├── docs/                  # Unit verification specifications
-│   │   ├── spec_verification_aes.md  # AES-128 core unit verification spec
-│   │   └── spec_verification_prng.md # LFSR PRNG unit verification spec
-│   ├── tb_aes_core.v          # AES core unit testbench
-│   ├── tb_lfsr_prng_ctrl.v    # LFSR PRNG unit testbench
-│   └── tb_cpu_aes_prng.v      # System testbench (supports RTL & Gate-Level Simulation)
-├── sim/                       # Simulation output directory (VCD waves, executables)
-├── syn/                       # Synthesis output directory (Yosys scripts, netlists)
-│   └── presynth_check.ys      # Pre-synthesis fast quality check script (0.7s)
-└── gls/                       # Gate-Level Simulation output directory
+│   ├── main.c                 # C source code controlling test sequence
+│   ├── start.S, sections.lds, bin2hex.py, Makefile, gen_firmware.py
+└── top/                       # System Integration & Full-Chip Synthesis
+    ├── rtl/ (cpu_aes_prng_core.v, cpu_aes_prng_top.v)
+    ├── tb/  (tb_cpu_aes_prng.v - System integration testbench)
+    ├── Makefile, filelist.f
+    └── sim/, syn/, gls/
 ```
 
 ---
@@ -82,52 +87,44 @@ make clean
 ## 4. Automation Commands
 
 ```bash
-# 1. Compile firmware standalone
-make firmware
-
-# 2. Run Verilator lint check on RTL (strict multi-driver checking)
-make lint
-
-# 3. Run ultra-fast Yosys Pre-Synthesis Check (0.7s, catches ALDFFE/Multi-driver errors)
-make presynth_check
-
-# 4. Run AES & PRNG unit simulations (verifies tb_aes_core.v and tb_lfsr_prng_ctrl.v)
+# 1. Run unit simulations across ALL sub-blocks sequentially
 make unit_sim
-# (or individually: make test_aes / make test_prng)
 
-# 5. Run Icarus Verilog system RTL simulation
-make rtl_sim
+# 2. Run unit simulations across ALL sub-blocks in PARALLEL (Multi-core)
+make -j unit_sim
 
-# 6. Run Yosys logic synthesis
-make syn
+# 3. Run unit simulation for target sub-block
+make BLOCK=aes_core block_sim
+make BLOCK=lfsr_prng block_sim
+make BLOCK=aes_dma_subsys block_sim
+make BLOCK=picorv32_cpu block_sim
+
+# 4. Run Out-of-Context synthesis for target sub-block
+make BLOCK=aes_core block_syn
+
+# 5. Run system integration simulation (Top-level RTL + Firmware execution)
+make top_sim
+# (or alias: make rtl_sim)
+
+# 6. Run full-chip logic synthesis
+make top_syn
+# (or alias: make syn)
 
 # 7. Run Gate-Level Simulation (GLS)
 make gls_sim
 
-# 8. Run PnR flow (100MHz, sky130_fd_sc_hs)
+# 8. Run Verilator lint check across all blocks and top
+make lint
+
+# 9. Run Yosys pre-synthesis AST check across all blocks and top
+make presynth_check
+
+# 10. Run PnR flow (100MHz, sky130_fd_sc_hs)
 make pnr
 
-# 9. Report phase-by-phase QoR & runtime table (hh:mm:ss format)
+# 11. Report phase-by-phase QoR & runtime table (hh:mm:ss format)
 make pnr_qor
 
-# 10. Run all verification steps
-make all
-
-# 11. Clean temporary files
+# 12. Clean temporary files in all blocks and top
 make clean
 ```
-
----
-
-## 5. Technical Specifications Link Index
-
-For detailed sub-block designs & verification specifications, refer to the documents:
-- [Top-Level Architecture & Memory Map Guide](docs/spec_top.md)
-- [PicoRV32 RISC-V CPU Core Specification](docs/spec_picorv32_cpu.md)
-- [AES-DMA Subsystem & MMIO Register Specification](docs/spec_aes_dma_subsys.md)
-- [128-bit LFSR PRNG Specification](docs/spec_lfsr_prng.md)
-- [Iterative AES-128 Encryption Core Specification](docs/spec_aes_core.md)
-- [Instruction RAM (imem) & Shared Data SRAM (dmem) Specification](docs/spec_memories.md)
-- [AES-128 Unit Verification Specification](tb/docs/spec_verification_aes.md)
-- [LFSR PRNG Unit Verification Specification](tb/docs/spec_verification_prng.md)
-
