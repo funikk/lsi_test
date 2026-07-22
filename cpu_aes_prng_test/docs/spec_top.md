@@ -13,10 +13,12 @@ LSI 論理合成および PnR（配置配線）処理を考慮し、RAM メモ�
 
 ```mermaid
 graph TD
-    CLK[clk / rst_n] --> TOP
+    CLK[clk / rst_n] --> cpu_aes_prng_core
+    CLK --> IMEM
+    CLK --> DMEM
 
-    subgraph cpu_aes_prng_top (トップレベル・ラッパー)
-        subgraph cpu_aes_prng_core (中間階層コア・論理合成対象)
+    subgraph cpu_aes_prng_top ["cpu_aes_prng_top (トップレベル・ラッパー)"]
+        subgraph cpu_aes_prng_core ["cpu_aes_prng_core (中間階層コア・論理合成対象)"]
             CPU[PicoRV32 RISC-V CPU]
             AES_DMA[AES-128 / PRNG DMA サブシステム]
             ARBITER[DMEM バスアビータ]

@@ -11,7 +11,7 @@
 
 ```mermaid
 graph LR
-    subgraph lfsr_prng_ctrl (128-bit)
+    subgraph lfsr_prng_ctrl ["lfsr_prng_ctrl (128-bit)"]
         SEED[128-bit seed_i] --> L32_0[lfsr_32_ctrl #0]
         SEED --> L32_1[lfsr_32_ctrl #1]
         SEED --> L32_2[lfsr_32_ctrl #2]
