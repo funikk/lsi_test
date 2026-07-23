@@ -14,11 +14,21 @@ def create_project(project_name: str, force: bool = False):
         sys.exit(1)
 
     # Subdirectories to create
-    subdirs = ["rtl", "tb", "sim", "syn", "gls", "docs"]
+    subdirs = [
+        "rtl", "tb", "sim", "syn", "gls",
+        "docs/system_architecture",
+        f"docs/logic_design/{project_name}",
+        f"docs/verification/{project_name}",
+        "docs/firmware",
+        "docs/backend"
+    ]
     for sd in subdirs:
         (project_dir / sd).mkdir(parents=True, exist_ok=True)
 
-    # 0. Specification Template: <name>/docs/spec.md
+    # Docs Templates
+    (project_dir / "docs" / "system_architecture" / "spec_top.md").write_text("# System Architecture Top\n")
+    (project_dir / "docs" / "system_architecture" / "architecture_candidates.md").write_text("# Architecture Candidates\n")
+    
     spec_content = f"""# Module Specification: {project_name}
 
 ## 1. Overview
@@ -37,7 +47,10 @@ Describe the purpose and high-level functionality of `{project_name}`.
 ## 3. Architecture & Logic Details
 Detail internal pipeline, state machine, or sub-modules here.
 """
-    (project_dir / "docs" / "spec.md").write_text(spec_content)
+    (project_dir / "docs" / "logic_design" / project_name / "spec.md").write_text(spec_content)
+    (project_dir / "docs" / "verification" / project_name / "test_plan.md").write_text("# Test Plan\n")
+    (project_dir / "docs" / "firmware" / "spec_firmware.md").write_text("# Firmware Spec\n")
+    (project_dir / "docs" / "backend" / "pnr_qor_report.md").write_text("# PnR QoR Report\n")
 
     # 1. RTL Template: <name>/rtl/<name>.v
     rtl_content = f"""// {project_name}.v - Synthesizable Top Module for {project_name}
@@ -156,6 +169,9 @@ write_verilog -noattr {project_name}_syn.v
     # 5. Makefile: <name>/Makefile
     makefile_content = f"""# Makefile for {project_name} project
 
+SHELL := /bin/bash
+.SHELLFLAGS := -o pipefail -c
+
 VERILATOR = verilator
 IVERILOG  = iverilog
 VVP       = vvp
@@ -178,21 +194,24 @@ SIM_CELLS = /usr/share/yosys/simlib.v
 all: lint presynth_check rtl_sim syn gls_sim
 
 lint:
-	$(VERILATOR) --lint-only -Wall -Werror-MULTIDRIVEN -Wno-fatal $(RTL_SRCS)
+	@mkdir -p $(SIM_DIR)
+	$(VERILATOR) --lint-only -Wall -Werror-MULTIDRIVEN -Wno-fatal $(RTL_SRCS) 2>&1 | tee $(SIM_DIR)/lint.log
 
 presynth_check:
-	cd $(SYN_DIR) && $(YOSYS) -s presynth_check.ys
+	@mkdir -p $(SYN_DIR)
+	(cd $(SYN_DIR) && $(YOSYS) -s presynth_check.ys) 2>&1 | tee $(SYN_DIR)/presynth_check.log
 
 rtl_sim:
-	cd $(SIM_DIR) && $(IVERILOG) -o rtl_sim.out $(addprefix ../, $(TB_SRCS)) $(addprefix ../, $(RTL_SRCS))
-	cd $(SIM_DIR) && $(VVP) rtl_sim.out
+	@mkdir -p $(SIM_DIR)
+	(cd $(SIM_DIR) && $(IVERILOG) -o rtl_sim.out $(addprefix ../, $(TB_SRCS)) $(addprefix ../, $(RTL_SRCS)) && $(VVP) rtl_sim.out) 2>&1 | tee $(SIM_DIR)/rtl_sim.log
 
 syn:
-	cd $(SYN_DIR) && $(YOSYS) -s run_synth.ys
+	@mkdir -p $(SYN_DIR)
+	(cd $(SYN_DIR) && $(YOSYS) -s run_synth.ys) 2>&1 | tee $(SYN_DIR)/synth.log
 
 gls_sim: syn
-	cd $(SIM_DIR) && $(IVERILOG) -DGATE_SIM -o gls_sim.out ../$(TB_SRCS) ../$(SYN_NETLIST) $(SIM_CELLS)
-	cd $(SIM_DIR) && $(VVP) gls_sim.out
+	@mkdir -p $(SIM_DIR) $(GLS_DIR)
+	(cd $(SIM_DIR) && $(IVERILOG) -DGATE_SIM -o gls_sim.out ../$(TB_SRCS) ../$(SYN_NETLIST) $(SIM_CELLS) && $(VVP) gls_sim.out) 2>&1 | tee $(GLS_DIR)/gls_sim.log
 	mv $(SIM_DIR)/tb_{project_name}.vcd $(GLS_DIR)/ || true
 	mv $(SIM_DIR)/gls_sim.out $(GLS_DIR)/ || true
 
@@ -202,12 +221,13 @@ pnr:
 
 # 6. PnR QoR Report
 pnr_qor:
-	../tools/report_qor_phases.py ../librelane_designs/{project_name}/runs/run_100MHz
+	mkdir -p docs/backend
+	../tools/report_qor_phases.py ../librelane_designs/{project_name}/runs/run_100MHz > docs/backend/pnr_qor_report.md
 
 clean:
-	rm -f $(SIM_DIR)/rtl_sim.out $(SIM_DIR)/tb_{project_name}.vcd
-	rm -f $(GLS_DIR)/gls_sim.out $(GLS_DIR)/tb_{project_name}.vcd
-	rm -f $(SYN_DIR)/{project_name}_syn.v
+	rm -f $(SIM_DIR)/rtl_sim.out $(SIM_DIR)/tb_{project_name}.vcd $(SIM_DIR)/*.log
+	rm -f $(GLS_DIR)/gls_sim.out $(GLS_DIR)/tb_{project_name}.vcd $(GLS_DIR)/*.log
+	rm -f $(SYN_DIR)/{project_name}_syn.v $(SYN_DIR)/*.log
 """
     (project_dir / "Makefile").write_text(makefile_content)
 
@@ -218,7 +238,11 @@ clean:
 This is a standard EDA testbed subproject for `{project_name}`.
 
 ## 2. Directory Structure
-- `docs/`: Module specifications and design documentation (`spec.md`)
+- `docs/system_architecture/`: System architecture specs (`spec_top.md`, `architecture_candidates.md`)
+- `docs/logic_design/{project_name}/`: Block-level logic specs (`spec.md`)
+- `docs/verification/{project_name}/`: Block-level test plans and verification reports (`test_plan.md`)
+- `docs/firmware/`: Firmware specs, MMIO maps, driver docs (`spec_firmware.md`)
+- `docs/backend/`: Physical design & PnR QoR reports (`pnr_qor_report.md`)
 - `rtl/`: Synthesizable Verilog RTL source files (`{project_name}.v`)
 - `tb/`: Testbench files (`tb_{project_name}.v`)
 - `sim/`: RTL simulation outputs (`rtl_sim.out`, waveforms)
