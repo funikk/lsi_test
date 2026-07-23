@@ -15,7 +15,8 @@ lsi_test/
 ├── tools/
 │   ├── report_qor_phases.py                 # QoR集計スクリプト
 │   └── open_viewer.sh                       # GUIビューア起動スクリプト
-├── librelane/                               # LibreLane 本体 (uv環境)
+├── librelane/                               # LibreLane 本体 (Nix flake / uv環境)
+├── shell.nix / .envrc                       # プロジェクトルート Nix 環境定義
 ├── pdks/                                    # sky130A PDK ディレクトリ
 ├── librelane_designs/                       # LibreLane用デザイン設定フォルダ
 │   └── <新規モジュール名>/                   # 例: my_fifo_top
@@ -89,6 +90,7 @@ make presynth_check
 ## 4. ステップ 3: LibreLane PnR フローの実行 (`tools/run_pnr.py`)
 
 統合実行スクリプト `tools/run_pnr.py` を使用することで、標準実行だけでなくクロック周波数の変更・セルライブラリ切り替え・スイープ実行・途中ステップからの再開を簡単に行えます。
+*(※ Nix 環境外で実行された場合でも、`tools/run_pnr.py` が自動的に `nix develop ./librelane` を検出・起動して Yosys 0.62 / OpenROAD 環境へ引き継ぎます)*
 
 ```bash
 # ① 標準実行 (デフォルト 100MHz / sky130_fd_sc_hd / 上書き実行)

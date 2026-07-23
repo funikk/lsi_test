@@ -151,7 +151,7 @@ Update the `Makefile` inside `<MODULE_DIRECTORY>/` to add `pnr` and `pnr_qor` ta
 
 2. Add `pnr` target:
    ```makefile
-   # PnR Flow
+   # PnR Flow (run_pnr.py automatically detects & uses nix develop if not active)
    pnr:
    	python3 ../tools/run_pnr.py <MODULE_NAME>
    ```

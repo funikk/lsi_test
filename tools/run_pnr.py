@@ -4,7 +4,25 @@ import sys
 import json
 import argparse
 import subprocess
+import shutil
 from pathlib import Path
+
+def check_and_reexec_nix(workspace_root: Path):
+    try:
+        import librelane  # noqa: F401
+    except ImportError:
+        nix_bin = shutil.which("nix")
+        if nix_bin and os.environ.get("AUTO_NIX_REEXEC") != "1":
+            librelane_dir = workspace_root / "librelane"
+            print(f"Notice: LibreLane environment not active. Automatically entering 'nix develop {librelane_dir}'...")
+            env = os.environ.copy()
+            env["AUTO_NIX_REEXEC"] = "1"
+            nix_cmd = [nix_bin, "develop", str(librelane_dir), "--command", "python3", str(Path(__file__).resolve())] + sys.argv[1:]
+            res = subprocess.run(nix_cmd, env=env)
+            sys.exit(res.returncode)
+        else:
+            print("Error: 'librelane' module not found and 'nix' command is unavailable.", file=sys.stderr)
+            sys.exit(1)
 
 def resolve_paths(module_name: str):
     script_dir = Path(__file__).resolve().parent
@@ -66,7 +84,7 @@ def run_single_pnr(workspace_root, librelane_dir, pdk_root, target_design_dir, c
             run_tag = f"run_{eff_freq_mhz}MHz"
 
     cmd = [
-        "uv", "run", "--python", "3.12", "python3", "-m", "librelane"
+        sys.executable, "-m", "librelane"
     ]
 
     if hide_progress_bar:
@@ -159,6 +177,7 @@ def main():
     args = parser.parse_args()
 
     workspace_root, librelane_dir, pdk_root, target_design_dir, config_json = resolve_paths(args.module)
+    check_and_reexec_nix(workspace_root)
 
     if args.sweep_clk:
         periods = [float(p.strip()) for p in args.sweep_clk.split(",")]
