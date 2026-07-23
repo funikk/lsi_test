@@ -13,6 +13,16 @@ description: >
 ## Overview
 This skill automates the setup of multi-developer parallel circuit design projects and individual sub-block sandboxes within the repository. It uses static template directories (`resources/template_project` and `resources/template_block`) and simple shell-based placeholder substitution.
 
+## Documentation Structure
+The project generates the following standardized role-based documentation directory hierarchy under `docs/`:
+- `docs/system_architecture/` : System architecture specs (`spec_top.md`, `architecture_candidates.md`)
+- `docs/logic_design/<block_name>/` : Block-level logic specs (`spec.md`)
+- `docs/verification/<block_name>/` : Block-level test plans and verification reports (`test_plan.md`)
+- `docs/firmware/` : Firmware specs, MMIO maps, driver docs (`spec_firmware.md`)
+- `docs/backend/` : Physical design & PnR QoR reports (`pnr_qor_report.md`)
+
+When adding a sub-block, its logic design and verification documents will be automatically created under this central `docs/` structure.
+
 ## Quick Start
 
 ### 1. Create a New Multi-Developer Project

@@ -10,7 +10,7 @@ description: >
 # New Circuit Project Creator
 
 ## Overview
-This skill automates the setup of a new Verilog/SystemVerilog circuit design subproject within the `lsi_test` repository. It creates a standardized directory structure (`docs/`, `rtl/`, `tb/`, `sim/`, `syn/`, `gls/`) along with all necessary automation files (`Makefile`, `syn/run_synth.ys`, `syn/presynth_check.ys`, `AGENTS.md`, `docs/spec.md`, and starter RTL/testbench files).
+This skill automates the setup of a new Verilog/SystemVerilog circuit design subproject within the `lsi_test` repository. It creates a standardized directory structure (`docs/`, `rtl/`, `tb/`, `sim/`, `syn/`, `gls/`) along with all necessary automation files (`Makefile`, `syn/run_synth.ys`, `syn/presynth_check.ys`, `AGENTS.md`, and starter RTL/testbench files).
 
 > [!NOTE]
 > Physical design (PnR) setup under `librelane_designs/` is managed separately by the `pnr-setup` skill.
@@ -41,7 +41,11 @@ make gls_sim        # Gate-Level simulation
 ├── AGENTS.md                 # Subproject reference guide and verification commands
 ├── Makefile                  # Automation targets (lint, presynth_check, rtl_sim, syn, gls_sim, clean)
 ├── docs/
-│   └── spec.md               # Module specification and architecture documentation
+│   ├── system_architecture/  # System architecture specs (`spec_top.md`, `architecture_candidates.md`)
+│   ├── logic_design/<project_name>/ # Block-level logic specs (`spec.md`)
+│   ├── verification/<project_name>/ # Block-level test plans and verification reports (`test_plan.md`)
+│   ├── firmware/             # Firmware specs, MMIO maps, driver docs (`spec_firmware.md`)
+│   └── backend/              # Physical design & PnR QoR reports (`pnr_qor_report.md`)
 ├── rtl/
 │   └── <project_name>.v      # Synthesizable RTL module template
 ├── tb/
@@ -80,3 +84,4 @@ uv run python3 .agents/skills/new-circuit-project/scripts/create_new_project.py 
    Always ensure the Yosys synthesis script `run_synth.ys` outputs `<project_name>_syn.v` (ending in `_syn.v`), which matches the root `.gitignore` pattern `*/syn/*_syn.v`.
 2. **Hardcoded Absolute Paths**:
    Never use absolute paths in Makefiles or scripts. Always use relative paths from the subproject directory.
+

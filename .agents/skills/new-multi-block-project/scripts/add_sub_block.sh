@@ -71,4 +71,10 @@ find "$TARGET_BLOCK_DIR" -name "*__BLOCK_NAME__*" | while read -r filepath; do
     mv "$filepath" "$newpath"
 done
 
+# 4. Create docs directories and templates
+mkdir -p "$PROJECT_DIR/docs/logic_design/$BLOCK_NAME"
+mkdir -p "$PROJECT_DIR/docs/verification/$BLOCK_NAME"
+echo "# Logic Spec" > "$PROJECT_DIR/docs/logic_design/$BLOCK_NAME/spec.md"
+echo "# Test Plan" > "$PROJECT_DIR/docs/verification/$BLOCK_NAME/test_plan.md"
+
 echo "Successfully added sub-block '$BLOCK_NAME' to project at: $TARGET_BLOCK_DIR"

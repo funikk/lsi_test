@@ -73,7 +73,8 @@ pnr:
 	python3 ../tools/run_pnr.py __PROJECT_NAME___core
 
 pnr_qor:
-	../tools/report_qor_phases.py ../librelane_designs/__PROJECT_NAME___core/runs/run_100MHz
+	mkdir -p docs/backend
+	../tools/report_qor_phases.py ../librelane_designs/__PROJECT_NAME___core/runs/run_100MHz > docs/backend/pnr_qor_report.md
 
 clean:
 	@for dir in $(BLOCK_DIRS) $(TOP_DIR); do \
