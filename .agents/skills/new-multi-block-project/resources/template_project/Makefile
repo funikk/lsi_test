@@ -6,7 +6,7 @@ BLOCK_NAMES := $(notdir $(BLOCK_DIRS))
 UNIT_SIM_TARGETS := $(addprefix unit_sim_,$(BLOCK_NAMES))
 TOP_DIR    := top
 
-.PHONY: all help unit_sim $(UNIT_SIM_TARGETS) block_sim block_syn top_sim rtl_sim top_syn syn lint presynth_check clean
+.PHONY: all help unit_sim $(UNIT_SIM_TARGETS) block_sim block_syn top_sim rtl_sim top_syn syn lint presynth_check pnr pnr_qor clean
 
 all: unit_sim top_sim
 
@@ -21,6 +21,8 @@ help:
 	@echo "make top_syn (syn)      : Run full-chip synthesis"
 	@echo "make lint               : Run Verilator lint across all blocks and top"
 	@echo "make presynth_check     : Run fast Yosys pre-synthesis checks across all modules"
+	@echo "make pnr                : Run PnR flow using LibreLane"
+	@echo "make pnr_qor            : Report PnR QoR & runtime summary"
 	@echo "make clean              : Clean temporary files in all blocks and top"
 
 unit_sim: $(UNIT_SIM_TARGETS)
@@ -64,10 +66,17 @@ lint:
 
 presynth_check:
 	@for dir in $(BLOCK_DIRS) $(TOP_DIR); do \
-		$(MAKE) -C $$dir syn || exit 1; \
+		$(MAKE) -C $$dir presynth_check || exit 1; \
 	done
+
+pnr:
+	python3 ../tools/run_pnr.py __PROJECT_NAME___core
+
+pnr_qor:
+	../tools/report_qor_phases.py ../librelane_designs/__PROJECT_NAME___core/runs/run_100MHz
 
 clean:
 	@for dir in $(BLOCK_DIRS) $(TOP_DIR); do \
 		$(MAKE) -C $$dir clean; \
 	done
+

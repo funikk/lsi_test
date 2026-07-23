@@ -173,7 +173,7 @@ SYN_YS   = $(SYN_DIR)/run_synth.ys
 SYN_NETLIST = $(SYN_DIR)/{project_name}_syn.v
 SIM_CELLS = /usr/share/yosys/simlib.v
 
-.PHONY: all lint presynth_check rtl_sim syn gls_sim clean
+.PHONY: all lint presynth_check rtl_sim syn gls_sim pnr pnr_qor clean
 
 all: lint presynth_check rtl_sim syn gls_sim
 
@@ -195,6 +195,14 @@ gls_sim: syn
 	cd $(SIM_DIR) && $(VVP) gls_sim.out
 	mv $(SIM_DIR)/tb_{project_name}.vcd $(GLS_DIR)/ || true
 	mv $(SIM_DIR)/gls_sim.out $(GLS_DIR)/ || true
+
+# 5. PnR Flow
+pnr:
+	python3 ../tools/run_pnr.py {project_name}
+
+# 6. PnR QoR Report
+pnr_qor:
+	../tools/report_qor_phases.py ../librelane_designs/{project_name}/runs/run_100MHz
 
 clean:
 	rm -f $(SIM_DIR)/rtl_sim.out $(SIM_DIR)/tb_{project_name}.vcd
