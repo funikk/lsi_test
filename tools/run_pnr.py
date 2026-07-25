@@ -192,6 +192,66 @@ def parse_run_metrics(run_dir: Path):
 
     return metrics
 
+def execute_remote_pnr(remote_host: str, args, script_path: Path):
+    cwd = Path.cwd().resolve()
+    # Filter out --remote / -r from arguments for the remote command
+    remote_args = []
+    skip_next = False
+    for arg in sys.argv[1:]:
+        if skip_next:
+            skip_next = False
+            continue
+        if arg in ("--remote", "-r"):
+            skip_next = True
+            continue
+        if arg.startswith("--remote="):
+            continue
+        remote_args.append(arg)
+
+    # Determine librelane path relative to cwd or workspace_root
+    script_dir = script_path.parent
+    workspace_root = script_dir.parent
+    try:
+        rel_librelane = (workspace_root / "librelane").relative_to(cwd)
+        rel_script = script_path.relative_to(cwd)
+    except ValueError:
+        rel_librelane = workspace_root / "librelane"
+        rel_script = script_path
+
+    librelane_str = str(rel_librelane)
+    if not librelane_str.startswith("./") and not librelane_str.startswith("/"):
+        librelane_str = f"./{librelane_str}"
+
+    script_str = str(rel_script)
+    if not script_str.startswith("./") and not script_str.startswith("/"):
+        script_str = f"./{script_str}"
+
+    cmd_str = f"cd {cwd} && IS_REMOTE_EXECUTION=1 nix develop {librelane_str} --command python3 {script_str} " + " ".join(f"'{a}'" for a in remote_args)
+    ssh_cmd = ["ssh", "-o", "BatchMode=yes", remote_host, cmd_str]
+
+    if args.dry_run:
+        print(f"[DRY-RUN Remote SSH Command]: {' '.join(ssh_cmd)}")
+        return 0
+
+    print(f"[REMOTE EXECUTION] Offloading PnR to remote host: {remote_host}")
+    print(f"[REMOTE COMMAND] {cmd_str}\n")
+
+    try:
+        res = subprocess.run(ssh_cmd)
+        if res.returncode != 0:
+            print(f"\nNotice: Remote SSH execution finished with return code {res.returncode}.", file=sys.stderr)
+            print("Troubleshooting SSH / Sandbox Issues:", file=sys.stderr)
+            print("  1. If running inside AI Agent sandbox, outbound network calls (SSH) are blocked in Standard Sandbox mode.", file=sys.stderr)
+            print("     --> Please approve 'Bypass Sandbox' execution or run directly in your local terminal.", file=sys.stderr)
+            print(f"  2. Verify passwordless SSH authentication: ssh {remote_host} 'date'", file=sys.stderr)
+            print("  3. Verify NFS workspace path is accessible on the remote host.", file=sys.stderr)
+        return res.returncode
+    except Exception as e:
+        print(f"\nError executing SSH command to {remote_host}: {e}", file=sys.stderr)
+        print("Troubleshooting SSH / Sandbox Issues:", file=sys.stderr)
+        print("  - If running inside AI Agent sandbox, please approve 'Bypass Sandbox' mode.", file=sys.stderr)
+        return 1
+
 def main():
     parser = argparse.ArgumentParser(description="Unified PnR execution & sweep script for LibreLane flow.")
     parser.add_argument("module", help="Target module/design name (e.g. counter, mac_array, cpu_aes_prng_core)")
@@ -204,11 +264,17 @@ def main():
     parser.add_argument("--from-step", type=str, help="Resume flow starting from step ID (e.g. openroad-detailedplacement)")
     parser.add_argument("--to-step", type=str, help="Stop flow at step ID")
     parser.add_argument("--sweep-clk", type=str, help="Comma-separated list of clock periods in ns for sweep testing (e.g. 10.0,8.0,6.67,5.0)")
+    parser.add_argument("--remote", "-r", type=str, default=os.environ.get("PNR_REMOTE_HOST"), help="Remote SSH host for NFS PnR offload (e.g. user@heavy-cpu-host)")
     parser.add_argument("--report-qor", action="store_true", default=True, help="Automatically display QoR summary after run (default: True)")
     parser.add_argument("--no-report-qor", action="store_false", dest="report_qor", help="Disable automatic QoR summary display")
     parser.add_argument("--dry-run", action="store_true", help="Print generated command line without executing")
 
     args = parser.parse_args()
+
+    # Remote dispatch if remote host is specified and we are not already on the remote side
+    if args.remote and os.environ.get("IS_REMOTE_EXECUTION") != "1":
+        ret = execute_remote_pnr(args.remote, args, Path(__file__).resolve())
+        sys.exit(ret)
 
     workspace_root, librelane_dir, pdk_root, target_design_dir, config_json = resolve_paths(args.module)
     check_librelane_env()

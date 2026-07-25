@@ -8,7 +8,7 @@ from pathlib import Path
 
 # Import shared PnR helper functions from run_pnr.py
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from run_pnr import check_librelane_env, resolve_paths, run_single_pnr, parse_run_metrics
+from run_pnr import check_librelane_env, execute_remote_pnr, resolve_paths, run_single_pnr, parse_run_metrics
 
 def resolve_trial_plan_paths(module_name: str):
     workspace_root, librelane_dir, pdk_root, target_design_dir, config_json = resolve_paths(module_name)
@@ -34,12 +34,13 @@ def update_qor_report(workspace_root: Path, module_name: str, target_design_dir:
     ]
 
     trials = plan_data.get("trials", [])
-    runs_dir = target_design_dir / "runs"
 
     for trial in trials:
         tag = trial.get("tag", "")
         desc = trial.get("description", "")
-        run_dir = runs_dir / tag
+        run_dir = target_design_dir / "runs" / tag
+        if not run_dir.exists():
+            run_dir = target_design_dir / "configs" / "runs" / tag
 
         if run_dir.exists():
             m = parse_run_metrics(run_dir)
@@ -76,13 +77,20 @@ def main():
     parser.add_argument("module", help="Target module name (e.g. VDRV_v1_core)")
     parser.add_argument("--trial", "-t", type=str, help="Specific trial tag to run (e.g. trial02_fanout15)")
     parser.add_argument("--all", action="store_true", help="Run all unrun or pending trials in sequence")
+    parser.add_argument("--remote", "-r", type=str, default=os.environ.get("PNR_REMOTE_HOST"), help="Remote SSH host for NFS PnR offload (e.g. user@heavy-cpu-host)")
     parser.add_argument("--update-report-only", action="store_true", help="Only parse runs and update report without executing PnR")
     parser.add_argument("--dry-run", action="store_true", help="Print actions without executing LibreLane")
 
     args = parser.parse_args()
 
+    # Remote dispatch if remote host is specified and we are not already on the remote side
+    if args.remote and not args.update_report_only and os.environ.get("IS_REMOTE_EXECUTION") != "1":
+        ret = execute_remote_pnr(args.remote, args, Path(__file__).resolve())
+        sys.exit(ret)
+
     workspace_root, librelane_dir, pdk_root, target_design_dir, trial_plan_file = resolve_trial_plan_paths(args.module)
-    check_librelane_env()
+    if not args.update_report_only:
+        check_librelane_env()
 
     with open(trial_plan_file, "r") as f:
         plan_data = json.load(f)

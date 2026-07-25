@@ -49,8 +49,10 @@ gls_sim: syn
 	mv gls_sim.out $(GLS_DIR)/ || true
 
 # 5. PnR Flow
+PNR_REMOTE ?= $(PNR_REMOTE_HOST)
+
 pnr:
-	nix develop ../librelane --command python3 ../tools/run_pnr.py sync_fifo
+	nix develop ../librelane --command python3 ../tools/run_pnr.py sync_fifo $(if $(PNR_REMOTE),--remote $(PNR_REMOTE))
 
 # 6. PnR QoR Report
 pnr_qor:

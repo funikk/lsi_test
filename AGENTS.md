@@ -96,6 +96,7 @@ make all
 *   [Verilog Best Practices](docs/verilog_best_practices.md): Synthesizable RTL design guidelines.
 *   [Tool Upgrade Guide](docs/upgrade_eda_tools.md): Instruction on compiling newer tool versions or using OSS CAD Suite.
 *   [PnR Flow Guide](docs/librelane_pnr_flow_guide.md): Guide for running physical design (PnR) on new modules using LibreLane.
+*   [Remote PnR Setup Guide](docs/remote_pnr_setup.md): Guide for offloading PnR execution to remote hosts via SSH/NFS.
 
 ### Subproject Reference Guides (AGENTS.md)
 *   [Counter Project Guide](counter_test/AGENTS.md): Simple 8-bit Counter.

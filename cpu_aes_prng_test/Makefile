@@ -79,8 +79,10 @@ presynth_check:
 		$(MAKE) -C $$dir presynth_check || exit 1; \
 	done
 
+PNR_REMOTE ?= $(PNR_REMOTE_HOST)
+
 pnr:
-	nix develop ../librelane --command python3 ../tools/run_pnr.py cpu_aes_prng_core -s sky130_fd_sc_hs
+	nix develop ../librelane --command python3 ../tools/run_pnr.py cpu_aes_prng_core -s sky130_fd_sc_hs $(if $(PNR_REMOTE),--remote $(PNR_REMOTE))
 
 pnr_qor:
 	../tools/report_qor_phases.py ../librelane_designs/cpu_aes_prng_core/runs/run_100MHz_hs

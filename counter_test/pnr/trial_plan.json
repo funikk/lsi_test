@@ -1,0 +1,65 @@
+{
+  "base_config": "config.json",
+  "trials": [
+    {
+      "tag": "trial01_base",
+      "description": "ベースライン (HDセル, Util 40%, Density 45%, Typical Corner)",
+      "overrides": {
+        "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
+        "pdk::sky130*": {
+          "FP_CORE_UTIL": 40,
+          "PL_TARGET_DENSITY_PCT": 45,
+          "MAX_FANOUT_CONSTRAINT": 20
+        }
+      }
+    },
+    {
+      "tag": "trial02_hs_library",
+      "description": "高速セルライブラリ適用 (sky130_fd_sc_hs)",
+      "overrides": {
+        "STD_CELL_LIBRARY": "sky130_fd_sc_hs",
+        "STD_CELL_LIBRARY_OPT": "sky130_fd_sc_hs",
+        "pdk::sky130*": {
+          "FP_CORE_UTIL": 40,
+          "PL_TARGET_DENSITY_PCT": 45,
+          "MAX_FANOUT_CONSTRAINT": 20
+        }
+      }
+    },
+    {
+      "tag": "trial03_fanout10",
+      "description": "ファンアウト制限強化 (Fanout 10)",
+      "overrides": {
+        "pdk::sky130*": {
+          "FP_CORE_UTIL": 40,
+          "PL_TARGET_DENSITY_PCT": 45,
+          "MAX_FANOUT_CONSTRAINT": 10
+        }
+      }
+    },
+    {
+      "tag": "trial04_dense60",
+      "description": "配置高密度化 (Density 60%)",
+      "overrides": {
+        "pdk::sky130*": {
+          "FP_CORE_UTIL": 40,
+          "PL_TARGET_DENSITY_PCT": 60,
+          "MAX_FANOUT_CONSTRAINT": 20
+        }
+      }
+    },
+    {
+      "tag": "trial05_ss_corner",
+      "description": "最悪条件プライマリ (nom_ss_100C_1v60) + Hold Slack Margin 0.3ns",
+      "overrides": {
+        "PRIMARY_CORNER": "nom_ss_100C_1v60",
+        "pdk::sky130*": {
+          "FP_CORE_UTIL": 40,
+          "PL_TARGET_DENSITY_PCT": 45,
+          "PL_RESIZER_HOLD_SLACK_MARGIN": 0.3,
+          "GLB_RESIZER_HOLD_SLACK_MARGIN": 0.3
+        }
+      }
+    }
+  ]
+}

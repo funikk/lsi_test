@@ -69,8 +69,10 @@ presynth_check:
 		$(MAKE) -C $$dir presynth_check || exit 1; \
 	done
 
+PNR_REMOTE ?= $(PNR_REMOTE_HOST)
+
 pnr:
-	nix develop ../librelane --command python3 ../tools/run_pnr.py __PROJECT_NAME___core
+	nix develop ../librelane --command python3 ../tools/run_pnr.py __PROJECT_NAME___core $(if $(PNR_REMOTE),--remote $(PNR_REMOTE))
 
 pnr_qor:
 	mkdir -p docs/backend

@@ -69,8 +69,10 @@ presynth_check:
 		$(MAKE) -C $$dir presynth_check || exit 1; \
 	done
 
+PNR_REMOTE ?= $(PNR_REMOTE_HOST)
+
 pnr:
-	nix develop ../librelane --command python3 ../tools/run_pnr.py VDRV_v1_core
+	nix develop ../librelane --command python3 ../tools/run_pnr.py VDRV_v1_core $(if $(PNR_REMOTE),--remote $(PNR_REMOTE))
 
 pnr_qor:
 	../tools/report_qor_phases.py ../librelane_designs/VDRV_v1_core/runs/run_100MHz_hs

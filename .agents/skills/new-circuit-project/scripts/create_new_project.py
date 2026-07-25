@@ -216,8 +216,10 @@ gls_sim: syn
 	mv $(SIM_DIR)/gls_sim.out $(GLS_DIR)/ || true
 
 # 5. PnR Flow
+PNR_REMOTE ?= $(PNR_REMOTE_HOST)
+
 pnr:
-	nix develop ../librelane --command python3 ../tools/run_pnr.py {project_name}
+	nix develop ../librelane --command python3 ../tools/run_pnr.py {project_name} $(if $(PNR_REMOTE),--remote $(PNR_REMOTE))
 
 # 6. PnR QoR Report
 pnr_qor:

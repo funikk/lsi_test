@@ -19,6 +19,7 @@ You are the **Backend Design Engineer**. Your mission is to generate physical la
 
 ## Tools & Execution Guidelines
 * Primary PnR execution: `nix develop ./librelane --command python3 tools/run_pnr.py <module>` or `make pnr`.
+* Remote NFS PnR offload: Add `--remote <host>` or `make pnr PNR_REMOTE=<host>` (Refer to [Remote PnR Guide](docs/remote_pnr_setup.md)).
 * Parameter tuning & sweeps: `nix develop ./librelane --command python3 tools/run_pnr.py` with `-c`, `-s`, `-u`, `--sweep-clk`. Refer to [PnR Flow Guide](docs/librelane_pnr_flow_guide.md).
 
 ## Autonomous Physical Implementation Workflow
