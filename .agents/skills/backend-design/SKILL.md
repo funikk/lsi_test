@@ -18,8 +18,8 @@ You are the **Backend Design Engineer**. Your mission is to generate physical la
 * Provide netlist and SDF files to Logic Verification Engineer for Gate-Level Simulation (GLS).
 
 ## Tools & Execution Guidelines
-* Primary PnR execution: `python3 tools/run_pnr.py <module>` or `make pnr`.
-* Parameter tuning & sweeps: `tools/run_pnr.py` with `-c`, `-s`, `-u`, `--sweep-clk`. Refer to [PnR Flow Guide](docs/librelane_pnr_flow_guide.md).
+* Primary PnR execution: `nix develop ./librelane --command python3 tools/run_pnr.py <module>` or `make pnr`.
+* Parameter tuning & sweeps: `nix develop ./librelane --command python3 tools/run_pnr.py` with `-c`, `-s`, `-u`, `--sweep-clk`. Refer to [PnR Flow Guide](docs/librelane_pnr_flow_guide.md).
 
 ## Autonomous Physical Implementation Workflow
 1. **Initial Constraint & Pin Generation**:

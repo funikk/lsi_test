@@ -224,19 +224,15 @@ uv run ciel build --pdk-family sky130 --pdk-root ../pdks 0fe599b2afb6708d2815431
 
 ```bash
 # プロジェクトルート (lsi_test) にて実行
-export PDK_ROOT=$(pwd)/pdks
+nix develop ./librelane --command python3 tools/run_pnr.py counter
 
-# aes_prng_top モジュールの PnR 実行（ローカル実行モード）
-cd librelane
-uv run python3 -m librelane \
-  --pdk-root $(pwd)/../pdks \
-  -p sky130A -s sky130_fd_sc_hs \
-  --run-tag run_pnr \
-  ../librelane_designs/aes_prng_top/config.json
+# 各サブプロジェクトの Makefile から実行
+cd counter_test
+make pnr
 ```
 
 ### 結果確認スクリプト
-* **QoRフェーズ別集計**: `./tools/report_qor_phases.py librelane_designs/aes_prng_top/runs/run_pnr`
+* **QoRフェーズ別集計**: `./tools/report_qor_phases.py librelane_designs/counter/runs/run_100MHz`
 * **GUIビューア起動 (OpenROAD / KLayout / Magic)**: `./tools/open_viewer.sh counter` (または `./tools/open_viewer.sh openroad counter`)
 
 ---

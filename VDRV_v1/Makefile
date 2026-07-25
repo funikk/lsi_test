@@ -70,7 +70,7 @@ presynth_check:
 	done
 
 pnr:
-	python3 ../tools/run_pnr.py VDRV_v1_core
+	nix develop ../librelane --command python3 ../tools/run_pnr.py VDRV_v1_core
 
 pnr_qor:
 	../tools/report_qor_phases.py ../librelane_designs/VDRV_v1_core/runs/run_100MHz_hs

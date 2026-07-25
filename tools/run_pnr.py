@@ -7,24 +7,15 @@ import subprocess
 import shutil
 from pathlib import Path
 
-def check_and_reexec_nix(workspace_root: Path, script_path: Path = None):
-    if script_path is None:
-        script_path = Path(__file__).resolve()
+def check_librelane_env():
     try:
         import librelane  # noqa: F401
     except ImportError:
-        nix_bin = shutil.which("nix")
-        if nix_bin and os.environ.get("AUTO_NIX_REEXEC") != "1":
-            librelane_dir = workspace_root / "librelane"
-            print(f"Notice: LibreLane environment not active. Automatically entering 'nix develop {librelane_dir}'...")
-            env = os.environ.copy()
-            env["AUTO_NIX_REEXEC"] = "1"
-            nix_cmd = [nix_bin, "develop", str(librelane_dir), "--command", "python3", str(script_path)] + sys.argv[1:]
-            res = subprocess.run(nix_cmd, env=env)
-            sys.exit(res.returncode)
-        else:
-            print("Error: 'librelane' module not found and 'nix' command is unavailable.", file=sys.stderr)
-            sys.exit(1)
+        print("Error: 'librelane' module not found.", file=sys.stderr)
+        print("Please run this script inside Nix shell environment using:", file=sys.stderr)
+        print("  nix develop ./librelane --command python3 tools/run_pnr.py <module>", file=sys.stderr)
+        print("or run 'make pnr' in the target subproject directory.", file=sys.stderr)
+        sys.exit(1)
 
 def resolve_paths(module_name: str):
     script_dir = Path(__file__).resolve().parent
@@ -220,7 +211,7 @@ def main():
     args = parser.parse_args()
 
     workspace_root, librelane_dir, pdk_root, target_design_dir, config_json = resolve_paths(args.module)
-    check_and_reexec_nix(workspace_root)
+    check_librelane_env()
 
     if args.sweep_clk:
         periods = [float(p.strip()) for p in args.sweep_clk.split(",")]

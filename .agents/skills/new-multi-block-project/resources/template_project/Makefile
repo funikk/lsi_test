@@ -70,7 +70,7 @@ presynth_check:
 	done
 
 pnr:
-	python3 ../tools/run_pnr.py __PROJECT_NAME___core
+	nix develop ../librelane --command python3 ../tools/run_pnr.py __PROJECT_NAME___core
 
 pnr_qor:
 	mkdir -p docs/backend

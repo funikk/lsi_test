@@ -8,7 +8,7 @@ from pathlib import Path
 
 # Import shared PnR helper functions from run_pnr.py
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from run_pnr import check_and_reexec_nix, resolve_paths, run_single_pnr, parse_run_metrics
+from run_pnr import check_librelane_env, resolve_paths, run_single_pnr, parse_run_metrics
 
 def resolve_trial_plan_paths(module_name: str):
     workspace_root, librelane_dir, pdk_root, target_design_dir, config_json = resolve_paths(module_name)
@@ -82,7 +82,7 @@ def main():
     args = parser.parse_args()
 
     workspace_root, librelane_dir, pdk_root, target_design_dir, trial_plan_file = resolve_trial_plan_paths(args.module)
-    check_and_reexec_nix(workspace_root, Path(__file__).resolve())
+    check_librelane_env()
 
     with open(trial_plan_file, "r") as f:
         plan_data = json.load(f)

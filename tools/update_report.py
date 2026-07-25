@@ -7,8 +7,8 @@ import json
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import run_trial_plan
 
-# Mock check_and_reexec_nix
-run_trial_plan.check_and_reexec_nix = lambda x: None
+# Mock check_librelane_env
+run_trial_plan.check_librelane_env = lambda: None
 
 # Call main with mocked args
 sys.argv = ['run_trial_plan.py', 'VDRV_v1_core', '--update-report-only']

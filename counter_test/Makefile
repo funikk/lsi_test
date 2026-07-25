@@ -50,7 +50,7 @@ gls_sim: syn
 
 # 5. PnR Flow
 pnr:
-	python3 ../tools/run_pnr.py counter
+	nix develop ../librelane --command python3 ../tools/run_pnr.py counter
 
 # 6. PnR QoR Report
 pnr_qor:

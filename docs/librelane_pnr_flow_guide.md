@@ -91,7 +91,7 @@ make presynth_check
 
 ## 4. PnR フロー実行ツールの役割整理と使い分け
 
-本プロジェクトでは、用途に応じて 2 種類の PnR 実行スクリプトを用意しています。どちらのスクリプトも同一の実行基盤 (`run_pnr.py` 内のコア) を共有しており、Nix 環境の自動検出・起動および QoR レポートの生成がサポートされています。
+本プロジェクトでは、用途に応じて 2 種類の PnR 実行スクリプトを用意しています。どちらのスクリプトも同一の実行基盤 (`run_pnr.py` 内のコア) を共有しており、Nix Shell (`nix develop ./librelane --command ...`) 上での直接実行および QoR レポートの生成がサポートされています。
 
 ### 4.1 単一 PnR 実行・クロック周波数スイープ (`tools/run_pnr.py`)
 
@@ -99,19 +99,19 @@ make presynth_check
 
 ```bash
 # ① 標準実行 (デフォルト 100MHz / sky130_fd_sc_hd / 上書き実行)
-python3 tools/run_pnr.py <新規モジュール名>
+nix develop ./librelane --command python3 tools/run_pnr.py <新規モジュール名>
 
 # ② クロック周波数を 125MHz (8.0ns) に変更して実行 (タグは自動的に run_125MHz_hd に決定)
-python3 tools/run_pnr.py <新規モジュール名> --clk-period 8.0
+nix develop ./librelane --command python3 tools/run_pnr.py <新規モジュール名> --clk-period 8.0
 
 # ③ 高速セルライブラリ (hs) を指定して実行
-python3 tools/run_pnr.py <新規モジュール名> --std-cell sky130_fd_sc_hs
+nix develop ./librelane --command python3 tools/run_pnr.py <新規モジュール名> --std-cell sky130_fd_sc_hs
 
 # ④ 複数周波数のスイープ連続実行 (10.0ns, 8.0ns, 6.67ns)
-python3 tools/run_pnr.py <新規モジュール名> --sweep-clk 10.0,8.0,6.67
+nix develop ./librelane --command python3 tools/run_pnr.py <新規モジュール名> --sweep-clk 10.0,8.0,6.67
 
 # ⑤ デバッグ用：指定ステップから再開
-python3 tools/run_pnr.py <新規モジュール名> --from-step openroad-detailedplacement
+nix develop ./librelane --command python3 tools/run_pnr.py <新規モジュール名> --from-step openroad-detailedplacement
 ```
 
 ### 4.2 DoE 試行計画・パラメータ探索管理 (`tools/run_trial_plan.py`)
@@ -175,11 +175,11 @@ PnR完了後、集計スクリプトを実行して各フェーズ（Synth / Pla
 ```
 
 ### 出力例:
-```markdown
-## LibreLane 各設計フェーズにおける QoR・実行時間 集計結果
-- **ターゲット実行フォルダ**: `my_fifo_test/pnr/runs/run_100MHz`
-- **対象コーナー**: `nom_tt_025C_1v80`
-- **フロー全ステップ合計実行時間**: `12.4` 分
+
+> **LibreLane 各設計フェーズにおける QoR・実行時間 集計結果**
+> - **ターゲット実行フォルダ**: `my_fifo_test/pnr/runs/run_100MHz`
+> - **対象コーナー**: `nom_tt_025C_1v80`
+> - **フロー全ステップ合計実行時間**: `12.4` 分
 
 | 設計フェーズ | インスタンス数 | スタンダードセル面積 | Setup 最悪スラック | Setup NPV | Hold 最悪スラック | Hold NPV | ステップ所要時間 |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -187,11 +187,10 @@ PnR完了後、集計スクリプトを実行して各フェーズ（Synth / Pla
 | 2. 配置 (Place) | 1,410 | 19,200.00 µm² | -1.20 ns | 18 | -2.50 ns | 24 | 4.8 秒 |
 | 3. クロックツリー (CTS) | 1,520 | 21,100.00 µm² | +0.85 ns | 0 | +0.22 ns | 0 | 6.1 秒 |
 | 4. 配線後 (Route) | 3,840 | 21,150.00 µm² | +0.62 ns | 0 | +0.25 ns | 0 | 45.0 秒 |
-```
 
 ---
 
-## 5. ステップ 4: レイアウトの確認 (GUI Viewers)
+## 6. ステップ 5: レイアウトの確認 (GUI Viewers)
 
 生成された GDSII や配置配線レイアウト（DEF）を GUI で対話的に確認・デバッグするには、ビューア起動ヘルパースクリプトを使用します。
 
@@ -212,7 +211,7 @@ xhost +
 
 ---
 
-## 6. ベストプラクティス・トラブルシューティング
+## 7. ベストプラクティス・トラブルシューティング
 
 1. **ポータビリティの維持 (絶対パスの非使用)**:
    ドキュメントやスクリプト内にはホストの絶対パス（`/home/username/...` など）を直接記述せず、必ず `$(pwd)` や相対パス（`dir::`）を使用してください。
@@ -225,7 +224,7 @@ xhost +
 
 ---
 
-## 7. SDC タイミング制約と Reset Synchronizer の記述ルール
+## 8. SDC タイミング制約と Reset Synchronizer の記述ルール
 
 OpenROAD / LibreLane 環境においてカスタム SDC (`constraint.sdc`) を記述する際の重要ポイントです。
 
@@ -240,4 +239,5 @@ OpenROAD / LibreLane 環境においてカスタム SDC (`constraint.sdc`) を�
 3. **非同期パス除外とエスケープ階層文字のマッチング**:
    * 非同期リセットピンには `set_false_path -from [get_ports {rst_n}]` を設定します。
    * Yosys 合成後ネットリストでは階層区切りがドット（`.`）やエスケープ記法に変換されるため、`-from` / `-to` のセル名指定には `*u_reset_sync*u_dff1*` パターンを使用します。
+
 

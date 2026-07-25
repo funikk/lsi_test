@@ -10,4 +10,4 @@ if command -v xhost &>/dev/null; then
     xhost + &>/dev/null || xhost +local:root &>/dev/null || true
 fi
 
-python3 "${SCRIPT_DIR}/open_viewer.py" "$@"
+nix develop "${SCRIPT_DIR}/../librelane" --command python3 "${SCRIPT_DIR}/open_viewer.py" "$@"

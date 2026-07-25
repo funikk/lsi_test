@@ -16,22 +16,15 @@ VALID_VIEWERS = {
     "openinmagic": "openinmagic"
 }
 
-def check_and_reexec_nix(workspace_root: Path):
+def check_librelane_env():
     try:
         import librelane  # noqa: F401
     except ImportError:
-        nix_bin = shutil.which("nix")
-        if nix_bin and os.environ.get("AUTO_NIX_REEXEC") != "1":
-            librelane_dir = workspace_root / "librelane"
-            print(f"Notice: LibreLane environment not active. Automatically entering 'nix develop {librelane_dir}'...")
-            env = os.environ.copy()
-            env["AUTO_NIX_REEXEC"] = "1"
-            nix_cmd = [nix_bin, "develop", str(librelane_dir), "--command", "python3", str(Path(__file__).resolve())] + sys.argv[1:]
-            res = subprocess.run(nix_cmd, env=env)
-            sys.exit(res.returncode)
-        else:
-            print("Error: 'librelane' module not found and 'nix' command is unavailable.", file=sys.stderr)
-            sys.exit(1)
+        print("Error: 'librelane' module not found.", file=sys.stderr)
+        print("Please run this script inside Nix shell environment using:", file=sys.stderr)
+        print("  nix develop ./librelane --command python3 tools/open_viewer.py <viewer> <module>", file=sys.stderr)
+        print("or use ./tools/open_viewer.sh script.", file=sys.stderr)
+        sys.exit(1)
 
 def resolve_design_dir(workspace_root: Path, target_input: str) -> Path:
     target_path = Path(target_input)
@@ -115,12 +108,31 @@ def read_scl(config_json: Path) -> str:
     return std_cell
 
 def main():
+    if "-h" in sys.argv or "--help" in sys.argv:
+        print("""Usage: python3 tools/open_viewer.py [viewer] [module] [run_tag]
+
+Purpose:
+  Launching GUI Viewers for LibreLane PnR layouts & masks.
+
+Supported Viewers:
+  openroad, klayout, magic
+
+Argument Order Flexibility:
+  Positional arguments can be provided flexibly. The script auto-detects the viewer name
+  and uses the remaining arguments for the module and run tag.
+
+Examples:
+  python3 tools/open_viewer.py openroad counter
+  python3 tools/open_viewer.py klayout aes run_50MHz
+  python3 tools/open_viewer.py picorv32 magic""")
+        sys.exit(0)
+
     script_dir = Path(__file__).resolve().parent
     workspace_root = script_dir.parent
     librelane_dir = workspace_root / "librelane"
     pdk_root = workspace_root / "pdks"
 
-    check_and_reexec_nix(workspace_root)
+    check_librelane_env()
 
     # Positional args processing
     args_list = sys.argv[1:]

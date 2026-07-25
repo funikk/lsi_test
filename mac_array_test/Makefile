@@ -50,7 +50,7 @@ gls_sim: syn
 
 # 5. PnR Flow
 pnr:
-	python3 ../tools/run_pnr.py mac_array
+	nix develop ../librelane --command python3 ../tools/run_pnr.py mac_array
 
 # 6. PnR QoR Report
 pnr_qor:

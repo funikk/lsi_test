@@ -50,7 +50,7 @@ gls_sim: syn
 
 # 5. PnR Flow
 pnr:
-	python3 ../tools/run_pnr.py aes_prng_top
+	nix develop ../librelane --command python3 ../tools/run_pnr.py aes_prng_top
 
 # 6. PnR QoR Report
 pnr_qor:
