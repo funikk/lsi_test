@@ -133,7 +133,7 @@ The following specialized subagents are defined in this project. It is highly re
 * **logic_verification**: Testbench implementation, coverage verification, and GLS.
 * **firmware_design**: Firmware (C/Assembly) development and test vector provision.
 * **backend_design**: Physical implementation (Logic synthesis, PnR, STA).
-* **methodology_engineer**: Development flow automation, Makefile construction, and DevOps.
+* **methodology_engineer**: Setup of EDA toolchains (simulators, linters, waveform viewers, PDKs) and interface abstraction (Makefiles, python wrappers, custom skills).
 
 
 The parent agent (or Project Manager) must strictly adhere to the following rules when assigning tasks to subagents and receiving completion reports:
