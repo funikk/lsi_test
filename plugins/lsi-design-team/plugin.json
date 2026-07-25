@@ -1,0 +1,8 @@
+{
+  "name": "lsi-design-team",
+  "version": "1.0.0",
+  "description": "Reusable multi-role LSI/FPGA design and verification team plugin supporting LibreLane, Intel Quartus, and Commercial ASIC toolchains.",
+  "author": {
+    "name": "LSI Design Team"
+  }
+}

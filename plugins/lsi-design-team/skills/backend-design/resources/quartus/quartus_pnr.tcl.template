@@ -1,0 +1,33 @@
+# Intel Quartus Prime Non-Interactive Compilation Tcl Script Template
+
+load_package flow
+
+# Open or create project
+if {[project_exists ${top_module}]} {
+    project_open ${top_module}
+} else {
+    project_new ${top_module} -overwrite
+}
+
+# Assign Family and Device
+set_global_assignment -name FAMILY "${fpga_family}"
+set_global_assignment -name DEVICE "${fpga_device}"
+set_global_assignment -name TOP_LEVEL_ENTITY ${top_module}
+
+# Add Source Files
+foreach verilog_file ${verilog_files} {
+    set_global_assignment -name VERILOG_FILE ${verilog_file}
+}
+
+# SDC Timing Constraints
+if {[file exists "pnr/constraint.sdc"]} {
+    set_global_assignment -name SDC_FILE "pnr/constraint.sdc"
+}
+
+# Run Compilation Phases
+execute_module -tool map
+execute_module -tool fit
+execute_module -tool sta
+execute_module -tool asm
+
+project_close
