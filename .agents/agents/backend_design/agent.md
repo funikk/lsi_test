@@ -28,7 +28,7 @@ When assigned a physical design, PnR, or timing closure task, the Backend Design
 
 1. **Initial Constraint & Pin Generation**:
    - Inspect architecture and RTL specifications (`docs/system_architecture/`, RTL module ports).
-   - Autonomously generate/refine pin placement (`pin_order.cfg` grouped by interface) and SDC timing constraints (`constraint.sdc`: clock, memory/external I/O delays, false paths).
+   - Autonomously generate/refine pin placement (`<project>/pnr/pin_order.cfg` grouped by interface) and SDC timing constraints (`<project>/pnr/constraint.sdc`: clock, memory/external I/O delays, false paths).
 2. **Target Process Logic Synthesis & Initial STA Verification**:
    - Perform targeted logic synthesis using Yosys and the target PDK (e.g., `sky130_fd_sc_hs`) and initial STA using OpenSTA before PnR.
    - Verify SDC annotations, clock definitions, memory/IO delays, and false paths to ensure there are no errors or warnings.

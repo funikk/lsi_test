@@ -1,10 +1,10 @@
 {
     "DESIGN_NAME": "aes_prng_top",
     "VERILOG_FILES": [
-        "dir::../../aes_prng_test/rtl/aes_sbox.v",
-        "dir::../../aes_prng_test/rtl/aes_core.v",
-        "dir::../../aes_prng_test/rtl/lfsr_prng.v",
-        "dir::../../aes_prng_test/rtl/aes_prng_top.v"
+        "dir::../rtl/aes_sbox.v",
+        "dir::../rtl/aes_core.v",
+        "dir::../rtl/lfsr_prng.v",
+        "dir::../rtl/aes_prng_top.v"
     ],
     "CLOCK_PERIOD": 8.0,
     "CLOCK_PORT": "clk",

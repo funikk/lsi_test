@@ -1,7 +1,8 @@
 {
-    "DESIGN_NAME": "counter",
+    "DESIGN_NAME": "mac_array",
     "VERILOG_FILES": [
-        "dir::../../counter_test/rtl/counter.v"
+        "dir::../rtl/mac_unit.v",
+        "dir::../rtl/mac_array.v"
     ],
     "CLOCK_PERIOD": 10.0,
     "CLOCK_PORT": "clk",

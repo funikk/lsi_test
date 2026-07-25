@@ -39,20 +39,39 @@ def resolve_design_dir(workspace_root: Path, target_input: str) -> Path:
         if target_path.is_file():
             return target_path.parent.parent if target_path.parent.name == "configs" else target_path.parent
         elif target_path.is_dir():
-            return target_path
+            return target_path / "pnr" if (target_path / "pnr" / "config.json").exists() else target_path
 
+    # Strategy 1: Check direct subproject directory <workspace>/<target_input>/pnr/
+    direct_pnr = workspace_root / target_input / "pnr"
+    if (direct_pnr / "config.json").exists():
+        return direct_pnr
+
+    # Strategy 2: Check all subproject directories for pnr/config.json matching target_input
+    for proj_dir in workspace_root.iterdir():
+        if proj_dir.is_dir():
+            pnr_dir = proj_dir / "pnr"
+            cfg_file = pnr_dir / "config.json"
+            if cfg_file.exists():
+                try:
+                    with open(cfg_file, "r") as f:
+                        cfg_data = json.load(f)
+                        design_name = cfg_data.get("DESIGN_NAME", "")
+                        if design_name == target_input or target_input in proj_dir.name or target_input in design_name:
+                            return pnr_dir
+                except Exception:
+                    pass
+
+    # Strategy 3: Legacy librelane_designs check
     designs_dir = workspace_root / "librelane_designs"
-    target_design_dir = designs_dir / target_input
-
-    if not target_design_dir.exists():
+    if (designs_dir / target_input / "config.json").exists():
+        return designs_dir / target_input
+    elif designs_dir.exists():
         matched = list(designs_dir.glob(f"*{target_input}*"))
-        if matched:
-            target_design_dir = matched[0]
-        else:
-            print(f"Error: Design directory for '{target_input}' not found under {designs_dir}", file=sys.stderr)
-            sys.exit(1)
+        if matched and (matched[0] / "config.json").exists():
+            return matched[0]
 
-    return target_design_dir
+    print(f"Error: Design directory for '{target_input}' not found under workspace", file=sys.stderr)
+    sys.exit(1)
 
 def find_latest_run_tag(target_design_dir: Path) -> str:
     runs_dir = target_design_dir / "runs"

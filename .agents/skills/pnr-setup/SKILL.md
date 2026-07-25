@@ -1,7 +1,7 @@
 ---
 name: pnr-setup
 description: >-
-  Use when the user asks to set up, configure, or prepare the PnR execution environment for a Verilog/SystemVerilog RTL module, or when integrating a new module into physical design. Generates librelane_designs/<module>/config.json, constraint.sdc, updates subproject Makefile with pnr (including --hide-progress-bar) and pnr_qor targets, updates AGENTS.md, and verifies RTL quality with pre-synthesis checks.
+  Use when the user asks to set up, configure, or prepare the PnR execution environment for a Verilog/SystemVerilog RTL module, or when integrating a new module into physical design. Generates <MODULE_DIR>/pnr/config.json, constraint.sdc, updates subproject Makefile with pnr (including --hide-progress-bar) and pnr_qor targets, updates AGENTS.md, and verifies RTL quality with pre-synthesis checks.
 ---
 
 # PnR Design Setup Skill
@@ -16,7 +16,7 @@ It includes automated script execution via `setup_pnr.py` and enforces OpenROAD-
 
 ## Quick Start (Automated Script)
 
-To automatically generate `librelane_designs/<MODULE_NAME>/config.json` and `constraint.sdc`:
+To automatically generate `<MODULE_DIR>/pnr/config.json` and `constraint.sdc`:
 
 ```bash
 uv run python3 .agents/skills/pnr-setup/scripts/setup_pnr.py --name <MODULE_NAME> --clk-period 10.0 --std-cell sky130_fd_sc_hd
@@ -55,19 +55,19 @@ When invoked, accept or determine the following parameters:
 
 ### Step 2: Create `config.json` and `constraint.sdc`
 
-Run the automation script or generate files under `librelane_designs/<MODULE_NAME>/`:
+Run the automation script or generate files under `<MODULE_DIR>/pnr/`:
 
 ```bash
 uv run python3 .agents/skills/pnr-setup/scripts/setup_pnr.py --name <MODULE_NAME> -c 10.0 -s sky130_fd_sc_hd
 ```
 
-#### `librelane_designs/<MODULE_NAME>/config.json`
+#### `<MODULE_DIR>/pnr/config.json`
 ```json
 {
     "DESIGN_NAME": "<MODULE_NAME>",
     "VERILOG_FILES": [
-        "dir::../../<MODULE_DIR>/rtl/<file1>.v",
-        "dir::../../<MODULE_DIR>/rtl/<file2>.v"
+        "dir::../rtl/<file1>.v",
+        "dir::../rtl/<file2>.v"
     ],
     "CLOCK_PERIOD": 10.0,
     "CLOCK_PORT": "clk",
@@ -91,7 +91,7 @@ uv run python3 .agents/skills/pnr-setup/scripts/setup_pnr.py --name <MODULE_NAME
 
 ## Pin Placement Order Guidelines (`pin_order.cfg`)
 
-To control the physical sides/edges (North, South, East, West) where I/O pin ports are placed on the die boundary, create `librelane_designs/<MODULE_NAME>/pin_order.cfg`:
+To control the physical sides/edges (North, South, East, West) where I/O pin ports are placed on the die boundary, create `<MODULE_DIR>/pnr/pin_order.cfg`:
 
 ```text
 #N
@@ -118,7 +118,7 @@ in_.*
 
 ## SDC Timing Constraints Guidelines (OpenROAD Compatibility)
 
-When creating or customizing `librelane_designs/<MODULE_NAME>/constraint.sdc`, adhere strictly to these rules:
+When creating or customizing `<MODULE_DIR>/pnr/constraint.sdc`, adhere strictly to these rules:
 
 ### 1. Avoid `set_dont_touch` (OpenSTA Incompatibility)
 - **Do NOT use `set_dont_touch`** in SDC files. OpenROAD's OpenSTA parser will throw a syntax error (`invalid command name "set_dont_touch"`).
@@ -161,7 +161,7 @@ Update the `Makefile` inside `<MODULE_DIRECTORY>/` to add `pnr` and `pnr_qor` ta
    # PnR QoR Report
    pnr_qor:
    	mkdir -p docs/backend
-   	../tools/report_qor_phases.py ../librelane_designs/<MODULE_NAME>/runs/run_100MHz > docs/backend/pnr_qor_report.md
+   	../tools/report_qor_phases.py ../<MODULE_DIR>/pnr/runs/run_100MHz > docs/backend/pnr_qor_report.md
    ```
 
 ---
@@ -171,8 +171,8 @@ Update the `Makefile` inside `<MODULE_DIRECTORY>/` to add `pnr` and `pnr_qor` ta
 Add PnR reference links and execution instructions to `<MODULE_DIRECTORY>/AGENTS.md`:
 
 ```markdown
-*   [config.json (PnR Config)](../librelane_designs/<MODULE_NAME>/config.json): PnR flow configuration.
-*   [constraint.sdc (SDC Timing Constraints)](../librelane_designs/<MODULE_NAME>/constraint.sdc): OpenROAD STA timing constraints.
+*   [config.json (PnR Config)](../<MODULE_DIR>/pnr/config.json): PnR flow configuration.
+*   [constraint.sdc (SDC Timing Constraints)](../<MODULE_DIR>/pnr/constraint.sdc): OpenROAD STA timing constraints.
 ```
 
 And in the **How to Run** section:

@@ -6,41 +6,43 @@
 
 ## 1. ディレクトリ構成ルール
 
-新しい回路モジュールを追加する場合、プロジェクトルート (`lsi_test`) の配下に以下のディレクトリ構成を作成します。
+新しい回路モジュールを追加する場合、各サブプロジェクトの直下に **`pnr/`** ディレクトリを作成し、設定ファイルおよび実行成果物をカプセル化して配置します。
 
 ```text
 lsi_test/
 ├── docs/
 │   └── librelane_pnr_flow_guide.md          # 本ガイド
 ├── tools/
-│   ├── report_qor_phases.py                 # QoR集計スクリプト
+│   ├── run_pnr.py                           # 統合 PnR 実行エンジン
+│   ├── run_trial_plan.py                    # DoE 試行自動化スクリプト
+│   ├── report_qor_phases.py                 # QoR 集計スクリプト
 │   └── open_viewer.sh                       # GUIビューア起動スクリプト
 ├── librelane/                               # LibreLane 本体 (Nix flake / uv環境)
-├── shell.nix / .envrc                       # プロジェクトルート Nix 環境定義
 ├── pdks/                                    # sky130A PDK ディレクトリ
-├── librelane_designs/                       # LibreLane用デザイン設定フォルダ
-│   └── <新規モジュール名>/                   # 例: my_fifo_top
-│       └── config.json                      # 設計設定ファイル
-└── <新規サブプロジェクト>/                   # RTLリソースフォルダ
-    └── rtl/
-        └── <新規モジュール名>.v
+└── <新規サブプロジェクト>/                   # サブプロジェクトフォルダ (例: VDRV_v1, my_fifo_test)
+    ├── rtl/                                 # RTL ソースファイル
+    ├── tb/                                  # テストベンチ
+    └── pnr/                                 # PnR 設計設定 & 実行成果物フォルダ
+        ├── config.json                      # メイン設計設定ファイル
+        ├── constraint.sdc                   # SDC タイミング制約ファイル
+        ├── pin_order.cfg                    # Pin 配置設定ファイル
+        ├── trial_plan.json                  # DoE 試行計画定義ファイル
+        └── runs/                            # PnR 実行ログ・レイアウト成果物 (gitignore)
 ```
-
-*※注意: 実行結果のパーミッション問題を回避するため、設定ファイル `config.json` はユーザー書き込み権限のある `librelane_designs/<新規モジュール名>/` 配下に配置します。*
 
 ---
 
 ## 2. ステップ 1: 設計設定ファイル (`config.json`) の作成
 
-新規モジュール用の設定ファイルを `librelane_designs/<新規モジュール名>/config.json` として作成します。
+新規モジュール用の設定ファイルを `<新規サブプロジェクト>/pnr/config.json` として作成します。
 
-### 設定ファイル例 (`librelane_designs/my_fifo_top/config.json`):
+### 設定ファイル例 (`my_fifo_test/pnr/config.json`):
 
 ```json
 {
     "DESIGN_NAME": "my_fifo_top",
     "VERILOG_FILES": [
-        "dir::../../my_fifo_test/rtl/my_fifo_top.v"
+        "dir::../rtl/my_fifo_top.v"
     ],
     "CLOCK_PERIOD": 10.0,
     "CLOCK_PORT": "clk",
@@ -116,7 +118,7 @@ python3 tools/run_pnr.py <新規モジュール名> --from-step openroad-detaile
 
 複数のパラメータ（動作 Corner、配置目標密度、Hold Margin、Fanout 制約など）を体系的に検証する **DoE (Design of Experiments) 試行計画** の管理に使用します。
 
-#### 1) 試行計画ファイル (`librelane_designs/<モジュール名>/trial_plan.json`)
+#### 1) 試行計画ファイル (`<PJ>/pnr/trial_plan.json`)
 ベースとなる `config.json` に対する差分オーバーライド定義を記述します。
 
 ```json
@@ -169,13 +171,13 @@ PnR完了後、集計スクリプトを実行して各フェーズ（Synth / Pla
 
 ```bash
 # プロジェクトルートにて実行
-./tools/report_qor_phases.py librelane_designs/<新規モジュール名>/runs/run_100MHz
+./tools/report_qor_phases.py <新規サブプロジェクト>/pnr/runs/run_100MHz
 ```
 
 ### 出力例:
 ```markdown
 ## LibreLane 各設計フェーズにおける QoR・実行時間 集計結果
-- **ターゲット実行フォルダ**: `librelane_designs/my_fifo_top/runs/run_100MHz`
+- **ターゲット実行フォルダ**: `my_fifo_test/pnr/runs/run_100MHz`
 - **対象コーナー**: `nom_tt_025C_1v80`
 - **フロー全ステップ合計実行時間**: `12.4` 分
 
@@ -217,7 +219,7 @@ xhost +
 2. **Timing Violation (スラック負値) への対処**:
    * タイミングがクローズしない場合、`config.json` の `CLOCK_PERIOD` を緩めるか、ライブラリを `sky130_fd_sc_hs`（高速ライブラリ）に切り替えて再実行します。
 3. **成果物 (GDSII/DEF) の場所**:
-   すべての最終成果物は `librelane_designs/<新規モジュール名>/runs/<run_tag>/final/` 配下に保存されます。
+   すべての最終成果物は `<新規サブプロジェクト>/pnr/runs/<run_tag>/final/` 配下に保存されます。
    * GDSII: `final/gds/<新規モジュール名>.gds`
    * 2Dレンダリング画像: `final/render/<新規モジュール名>.png`
 

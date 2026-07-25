@@ -19,9 +19,10 @@ def resolve_trial_plan_paths(module_name: str):
     return workspace_root, librelane_dir, pdk_root, target_design_dir, trial_plan_file
 
 def update_qor_report(workspace_root: Path, module_name: str, target_design_dir: Path, plan_data: dict):
-    vdrv_docs = workspace_root / "VDRV_v1" / "docs" / "backend" / "pnr_qor_report.md"
-    if not vdrv_docs.parent.exists():
-        vdrv_docs.parent.mkdir(parents=True, exist_ok=True)
+    proj_dir = target_design_dir.parent if target_design_dir.name == "pnr" else target_design_dir
+    report_file = proj_dir / "docs" / "backend" / "pnr_qor_report.md"
+    if not report_file.parent.exists():
+        report_file.parent.mkdir(parents=True, exist_ok=True)
 
     lines = [
         f"# {module_name} PnR & QoR Signoff Trial Report",
@@ -67,8 +68,8 @@ def update_qor_report(workspace_root: Path, module_name: str, target_design_dir:
         lines.append(f"```json\n{overrides}\n```")
         lines.append("")
 
-    vdrv_docs.write_text("\n".join(lines))
-    print(f"\n[REPORT UPDATED] Written trial comparison matrix to: {vdrv_docs}")
+    report_file.write_text("\n".join(lines))
+    print(f"\n[REPORT UPDATED] Written trial comparison matrix to: {report_file}")
 
 def main():
     parser = argparse.ArgumentParser(description="DoE Trial Plan Execution & QoR Comparison Generator.")

@@ -36,22 +36,44 @@ def resolve_paths(module_name: str):
         print(f"Error: LibreLane directory not found at {librelane_dir}", file=sys.stderr)
         sys.exit(1)
 
-    designs_dir = workspace_root / "librelane_designs"
-    target_design_dir = designs_dir / module_name
-    
-    if not target_design_dir.exists():
-        matched = list(designs_dir.glob(f"*{module_name}*"))
-        if matched:
-            target_design_dir = matched[0]
-        else:
-            print(f"Error: Design directory for '{module_name}' not found under {designs_dir}", file=sys.stderr)
-            sys.exit(1)
+    target_design_dir = None
 
-    config_json = target_design_dir / "config.json"
-    if not config_json.exists():
-        print(f"Error: config.json not found at {config_json}", file=sys.stderr)
+    # Strategy 1: Check direct subproject directory <workspace>/<module_name>/pnr/
+    direct_pnr = workspace_root / module_name / "pnr"
+    if (direct_pnr / "config.json").exists():
+        target_design_dir = direct_pnr
+    else:
+        # Strategy 2: Check all project directories containing pnr/config.json
+        for proj_dir in workspace_root.iterdir():
+            if proj_dir.is_dir():
+                pnr_dir = proj_dir / "pnr"
+                cfg_file = pnr_dir / "config.json"
+                if cfg_file.exists():
+                    try:
+                        with open(cfg_file, "r") as f:
+                            cfg_data = json.load(f)
+                            design_name = cfg_data.get("DESIGN_NAME", "")
+                            if design_name == module_name or module_name in proj_dir.name or module_name in design_name:
+                                target_design_dir = pnr_dir
+                                break
+                    except Exception:
+                        pass
+
+    # Strategy 3: Fallback legacy check librelane_designs/
+    if not target_design_dir:
+        legacy_dir = workspace_root / "librelane_designs" / module_name
+        if (legacy_dir / "config.json").exists():
+            target_design_dir = legacy_dir
+        elif legacy_dir.parent.exists():
+            matched = list(legacy_dir.parent.glob(f"*{module_name}*"))
+            if matched and (matched[0] / "config.json").exists():
+                target_design_dir = matched[0]
+
+    if not target_design_dir or not (target_design_dir / "config.json").exists():
+        print(f"Error: Could not resolve PnR directory for '{module_name}' under workspace.", file=sys.stderr)
         sys.exit(1)
 
+    config_json = target_design_dir / "config.json"
     return workspace_root, librelane_dir, pdk_root, target_design_dir, config_json
 
 def read_config_defaults(config_json: Path):

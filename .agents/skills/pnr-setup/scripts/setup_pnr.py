@@ -17,7 +17,7 @@ def setup_pnr(module_name: str, clock_period: float = 10.0, clock_port: str = "c
             print(f"Error: Module directory '{module_name}' or '{module_name}_test' not found.", file=sys.stderr)
             sys.exit(1)
 
-    design_dir = root_dir / "librelane_designs" / module_name
+    design_dir = module_dir / "pnr"
     if design_dir.exists() and not force:
         print(f"Notice: Design directory '{design_dir}' already exists. Updating configuration...", file=sys.stderr)
     
@@ -28,11 +28,9 @@ def setup_pnr(module_name: str, clock_period: float = 10.0, clock_port: str = "c
     rtl_files = []
     if rtl_dir.exists():
         rtl_files = [f for f in rtl_dir.glob("*.v")] + [f for f in rtl_dir.glob("*.sv")]
-    
-    rel_module_dir = module_dir.relative_to(root_dir)
 
     # Sort files to ensure top module or core is listed logically
-    verilog_files = [f"dir::../../{rel_module_dir}/rtl/{f.name}" for f in sorted(rtl_files)]
+    verilog_files = [f"dir::../rtl/{f.name}" for f in sorted(rtl_files)]
 
     # 2. Create config.json
     config_data = {
