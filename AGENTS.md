@@ -143,5 +143,7 @@ The parent agent (or Project Manager) must strictly adhere to the following rule
    Do not take a text report of "completed" from a subagent at face value. Always use tools to verify that the artifacts have actually been created or updated in the local filesystem.
 3. **Rejection & Retry**:
    If the actual file is not generated or the command execution log does not exist, the parent agent must not take over and perform the work itself. Demand a retry from the subagent: "The file was not created. Instead of outputting mock text, use your tools to write the file and execute the commands."
-4. **Ensuring Agent Permissions (Dynamic Definition Required)**:
-   Do NOT simply invoke subagents using pre-existing static definitions if they require tool access. You MUST dynamically define the subagent first using the `define_subagent` tool and explicitly set `enable_write_tools: true` (for file/command execution) or `enable_subagent_tools: true` (for nested invocation). After successful definition, you may invoke it. Failure to dynamically assign permissions will result in a read-only agent and mock responses.
+4. **Ensuring Agent Permissions & Workflow Skill References (Dynamic Definition Required)**:
+   Do NOT simply invoke subagents using pre-existing static definitions if they require tool access. You MUST dynamically define the subagent first using the `define_subagent` tool and explicitly set `enable_write_tools: true` (for file/command execution) or `enable_subagent_tools: true` (for nested invocation).
+   To simplify invocation and eliminate file inspection overhead, pass a concise `system_prompt` instructing the subagent to load its role workflow skill in `.agents/skills/<role-name>/SKILL.md` (e.g. `system_prompt: "You are the Logic Design Engineer. Read and strictly follow your workflow skill in .agents/skills/logic-design/SKILL.md before taking action."`).
+
