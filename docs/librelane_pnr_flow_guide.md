@@ -87,10 +87,13 @@ make presynth_check
 
 ---
 
-## 4. ステップ 3: LibreLane PnR フローの実行 (`tools/run_pnr.py`)
+## 4. PnR フロー実行ツールの役割整理と使い分け
 
-統合実行スクリプト `tools/run_pnr.py` を使用することで、標準実行だけでなくクロック周波数の変更・セルライブラリ切り替え・スイープ実行・途中ステップからの再開を簡単に行えます。
-*(※ Nix 環境外で実行された場合でも、`tools/run_pnr.py` が自動的に `nix develop ./librelane` を検出・起動して Yosys 0.62 / OpenROAD 環境へ引き継ぎます)*
+本プロジェクトでは、用途に応じて 2 種類の PnR 実行スクリプトを用意しています。どちらのスクリプトも同一の実行基盤 (`run_pnr.py` 内のコア) を共有しており、Nix 環境の自動検出・起動および QoR レポートの生成がサポートされています。
+
+### 4.1 単一 PnR 実行・クロック周波数スイープ (`tools/run_pnr.py`)
+
+単発の PnR 実行、CLI 引数による一時的なパラメータ変更、および複数クロック周波数に対するスイープ検証に使用します。
 
 ```bash
 # ① 標準実行 (デフォルト 100MHz / sky130_fd_sc_hd / 上書き実行)
@@ -109,9 +112,58 @@ python3 tools/run_pnr.py <新規モジュール名> --sweep-clk 10.0,8.0,6.67
 python3 tools/run_pnr.py <新規モジュール名> --from-step openroad-detailedplacement
 ```
 
+### 4.2 DoE 試行計画・パラメータ探索管理 (`tools/run_trial_plan.py`)
+
+複数のパラメータ（動作 Corner、配置目標密度、Hold Margin、Fanout 制約など）を体系的に検証する **DoE (Design of Experiments) 試行計画** の管理に使用します。
+
+#### 1) 試行計画ファイル (`librelane_designs/<モジュール名>/trial_plan.json`)
+ベースとなる `config.json` に対する差分オーバーライド定義を記述します。
+
+```json
+{
+  "base_config": "config.json",
+  "trials": [
+    {
+      "tag": "trial01_base",
+      "description": "ベースライン (Util 40%, Density 45%, Typical Primary)",
+      "overrides": {
+        "pdk::sky130*": { "FP_CORE_UTIL": 40, "PL_TARGET_DENSITY_PCT": 45, "MAX_FANOUT_CONSTRAINT": 20 }
+      }
+    },
+    {
+      "tag": "trial07_ss_density45",
+      "description": "SSLT最悪条件プライマリ化 (nom_ss_100C_1v60) + Density 45% + Hold Margin 0.3ns",
+      "overrides": {
+        "PRIMARY_CORNER": "nom_ss_100C_1v60",
+        "pdk::sky130*": {
+          "FP_CORE_UTIL": 40,
+          "PL_TARGET_DENSITY_PCT": 45,
+          "PL_RESIZER_HOLD_SLACK_MARGIN": 0.3,
+          "GLB_RESIZER_HOLD_SLACK_MARGIN": 0.3
+        }
+      }
+    }
+  ]
+}
+```
+
+#### 2) 実行コマンド
+`run_trial_plan.py` は `run_pnr.py` の内部実行関数を呼出し、試行後にマルチコーナーのサインオフ比較レポート (`docs/backend/pnr_qor_report.md`) を自動生成・更新します。
+
+```bash
+# ① 特定の試行 (Trial Tag) を指定して実行
+python3 tools/run_trial_plan.py <モジュール名> --trial trial07_ss_density45
+
+# ② trial_plan.json 内の全試行を順次シリアル実行
+python3 tools/run_trial_plan.py <モジュール名> --all
+
+# ③ PnR は再実行せず、過去の全試行ログから QoR 比較レポートのみを再集計・更新
+python3 tools/run_trial_plan.py <モジュール名> --update-report-only
+```
+
 ---
 
-## 4. ステップ 3: QoR（品質指標）および実行時間の集計
+## 5. ステップ 4: QoR（品質指標）および実行時間の集計
 
 PnR完了後、集計スクリプトを実行して各フェーズ（Synth / Place / CTS / Route）におけるセル面積・インスタンス数・Setup/Hold スラック・違反パス数・実行時間を表示します。
 

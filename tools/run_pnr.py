@@ -7,7 +7,9 @@ import subprocess
 import shutil
 from pathlib import Path
 
-def check_and_reexec_nix(workspace_root: Path):
+def check_and_reexec_nix(workspace_root: Path, script_path: Path = None):
+    if script_path is None:
+        script_path = Path(__file__).resolve()
     try:
         import librelane  # noqa: F401
     except ImportError:
@@ -17,7 +19,7 @@ def check_and_reexec_nix(workspace_root: Path):
             print(f"Notice: LibreLane environment not active. Automatically entering 'nix develop {librelane_dir}'...")
             env = os.environ.copy()
             env["AUTO_NIX_REEXEC"] = "1"
-            nix_cmd = [nix_bin, "develop", str(librelane_dir), "--command", "python3", str(Path(__file__).resolve())] + sys.argv[1:]
+            nix_cmd = [nix_bin, "develop", str(librelane_dir), "--command", "python3", str(script_path)] + sys.argv[1:]
             res = subprocess.run(nix_cmd, env=env)
             sys.exit(res.returncode)
         else:
@@ -120,7 +122,7 @@ def run_single_pnr(workspace_root, librelane_dir, pdk_root, target_design_dir, c
     cmd_str = " ".join(cmd)
     print(f"\n==========================================")
     print(f" Executing PnR Flow for {target_design_dir.name}")
-    print(f" Tag: {run_tag} | Target: {eff_freq_mhz}MHz ({eff_clk_period:.2f}ns) | SCL: {eff_std_cell}")
+    print(f" Config: {config_json.name} | Tag: {run_tag} | Target: {eff_freq_mhz}MHz ({eff_clk_period:.2f}ns) | SCL: {eff_std_cell}")
     print(f" Command: {cmd_str}")
     print(f"==========================================\n")
 
@@ -141,22 +143,41 @@ def run_single_pnr(workspace_root, librelane_dir, pdk_root, target_design_dir, c
 
 def parse_run_metrics(run_dir: Path):
     final_json = run_dir / "final" / "metrics.json"
+    metrics = {
+        "instances": "N/A",
+        "area": "N/A",
+        "setup_ws": "N/A",
+        "setup_tt_ws": "N/A",
+        "setup_ss_ws": "N/A",
+        "setup_vio": 0,
+        "hold_ws": "N/A",
+        "hold_vio": 0,
+        "max_cap_vio": 0,
+        "max_slew_vio": 0,
+        "drc": 0
+    }
     if not final_json.exists():
-        return None
+        return metrics
+
     try:
         with open(final_json, "r") as f:
             data = json.load(f)
-            return {
-                "instances": data.get("design__instance__count", "N/A"),
-                "area": data.get("design__instance__area__stdcell", data.get("design__instance__area", "N/A")),
-                "setup_ws": data.get("timing__setup__ws", "N/A"),
-                "setup_vio": data.get("timing__setup_vio__count", 0),
-                "hold_ws": data.get("timing__hold__ws", "N/A"),
-                "hold_vio": data.get("timing__hold_vio__count", 0),
-                "drc": data.get("magic__drc_error__count", data.get("klayout__drc_error__count", 0))
-            }
-    except Exception:
-        return None
+            metrics["instances"] = data.get("design__instance__count", "N/A")
+            metrics["area"] = data.get("design__instance__area__stdcell", data.get("design__instance__area", "N/A"))
+            metrics["setup_ws"] = data.get("timing__setup__ws", "N/A")
+            metrics["setup_vio"] = data.get("timing__setup_vio__count", 0)
+            metrics["hold_ws"] = data.get("timing__hold__ws", "N/A")
+            metrics["hold_vio"] = data.get("timing__hold_vio__count", 0)
+            metrics["drc"] = data.get("magic__drc_error__count", data.get("klayout__drc_error__count", 0))
+            metrics["max_cap_vio"] = data.get("design__max_cap_violation__count", 0)
+            metrics["max_slew_vio"] = data.get("design__max_slew_violation__count", 0)
+
+            metrics["setup_tt_ws"] = data.get("timing__setup__ws__corner:nom_tt_025C_1v80", metrics["setup_ws"])
+            metrics["setup_ss_ws"] = data.get("timing__setup__ws__corner:nom_ss_100C_1v60", metrics["setup_ws"])
+    except Exception as e:
+        print(f"Warning: Exception parsing {final_json}: {e}", file=sys.stderr)
+
+    return metrics
 
 def main():
     parser = argparse.ArgumentParser(description="Unified PnR execution & sweep script for LibreLane flow.")

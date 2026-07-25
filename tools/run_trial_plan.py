@@ -4,83 +4,21 @@ import sys
 import json
 import argparse
 import subprocess
-import shutil
 from pathlib import Path
 
-def check_and_reexec_nix(workspace_root: Path):
-    try:
-        import librelane  # noqa: F401
-    except ImportError:
-        nix_bin = shutil.which("nix")
-        if nix_bin and os.environ.get("AUTO_NIX_REEXEC") != "1":
-            librelane_dir = workspace_root / "librelane"
-            print(f"Notice: LibreLane environment not active. Automatically entering 'nix develop {librelane_dir}'...")
-            env = os.environ.copy()
-            env["AUTO_NIX_REEXEC"] = "1"
-            nix_cmd = [nix_bin, "develop", str(librelane_dir), "--command", "python3", str(Path(__file__).resolve())] + sys.argv[1:]
-            res = subprocess.run(nix_cmd, env=env)
-            sys.exit(res.returncode)
-        else:
-            print("Error: 'librelane' module not found and 'nix' command is unavailable.", file=sys.stderr)
-            sys.exit(1)
+# Import shared PnR helper functions from run_pnr.py
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from run_pnr import check_and_reexec_nix, resolve_paths, run_single_pnr, parse_run_metrics
 
-def resolve_paths(module_name: str):
-    script_dir = Path(__file__).resolve().parent
-    workspace_root = script_dir.parent
-    librelane_dir = workspace_root / "librelane"
-    pdk_root = workspace_root / "pdks"
-
-    designs_dir = workspace_root / "librelane_designs"
-    target_design_dir = designs_dir / module_name
-    if not target_design_dir.exists():
-        matched = list(designs_dir.glob(f"*{module_name}*"))
-        if matched:
-            target_design_dir = matched[0]
-        else:
-            print(f"Error: Design directory for '{module_name}' not found under {designs_dir}", file=sys.stderr)
-            sys.exit(1)
-
+def resolve_trial_plan_paths(module_name: str):
+    workspace_root, librelane_dir, pdk_root, target_design_dir, config_json = resolve_paths(module_name)
     trial_plan_file = target_design_dir / "trial_plan.json"
     if not trial_plan_file.exists():
         print(f"Error: trial_plan.json not found at {trial_plan_file}", file=sys.stderr)
         sys.exit(1)
-
     return workspace_root, librelane_dir, pdk_root, target_design_dir, trial_plan_file
 
-def parse_metrics(run_dir: Path):
-    final_json = run_dir / "final" / "metrics.json"
-    metrics = {
-        "instances": "N/A",
-        "area": "N/A",
-        "setup_tt_ws": "N/A",
-        "setup_ss_ws": "N/A",
-        "hold_ws": "N/A",
-        "max_cap_vio": 0,
-        "max_slew_vio": 0,
-        "drc": 0
-    }
-    if not final_json.exists():
-        return metrics
-
-    try:
-        with open(final_json, "r") as f:
-            data = json.load(f)
-            metrics["instances"] = data.get("design__instance__count", "N/A")
-            metrics["area"] = data.get("design__instance__area__stdcell", data.get("design__instance__area", "N/A"))
-            metrics["hold_ws"] = data.get("timing__hold__ws", "N/A")
-            metrics["drc"] = data.get("magic__drc_error__count", data.get("klayout__drc_error__count", 0))
-            metrics["max_cap_vio"] = data.get("design__max_cap_violation__count", 0)
-            metrics["max_slew_vio"] = data.get("design__max_slew_violation__count", 0)
-
-            metrics["setup_tt_ws"] = data.get("timing__setup__ws__corner:nom_tt_025C_1v80", data.get("timing__setup__ws", "N/A"))
-            metrics["setup_ss_ws"] = data.get("timing__setup__ws__corner:nom_ss_100C_1v60", data.get("timing__setup__ws", "N/A"))
-    except Exception as e:
-        print(f"Warning: Exception parsing {final_json}: {e}", file=sys.stderr)
-
-    return metrics
-
 def update_qor_report(workspace_root: Path, module_name: str, target_design_dir: Path, plan_data: dict):
-    # Find module source docs directory (e.g. VDRV_v1/docs/backend/pnr_qor_report.md)
     vdrv_docs = workspace_root / "VDRV_v1" / "docs" / "backend" / "pnr_qor_report.md"
     if not vdrv_docs.parent.exists():
         vdrv_docs.parent.mkdir(parents=True, exist_ok=True)
@@ -103,7 +41,7 @@ def update_qor_report(workspace_root: Path, module_name: str, target_design_dir:
         run_dir = runs_dir / tag
 
         if run_dir.exists():
-            m = parse_metrics(run_dir)
+            m = parse_run_metrics(run_dir)
             area_str = f"{m['area']:,.2f}" if isinstance(m['area'], (int, float)) else str(m['area'])
             hold_str = f"{m['hold_ws']:+.2f}" if isinstance(m['hold_ws'], (int, float)) else str(m['hold_ws'])
             tt_str = f"{m['setup_tt_ws']:+.2f}" if isinstance(m['setup_tt_ws'], (int, float)) else str(m['setup_tt_ws'])
@@ -142,8 +80,8 @@ def main():
 
     args = parser.parse_args()
 
-    workspace_root, librelane_dir, pdk_root, target_design_dir, trial_plan_file = resolve_paths(args.module)
-    check_and_reexec_nix(workspace_root)
+    workspace_root, librelane_dir, pdk_root, target_design_dir, trial_plan_file = resolve_trial_plan_paths(args.module)
+    check_and_reexec_nix(workspace_root, Path(__file__).resolve())
 
     with open(trial_plan_file, "r") as f:
         plan_data = json.load(f)
@@ -159,7 +97,6 @@ def main():
     configs_dir = target_design_dir / "configs"
     configs_dir.mkdir(exist_ok=True)
 
-    trials_to_run = []
     trials = plan_data.get("trials", [])
 
     if args.update_report_only:
@@ -207,38 +144,19 @@ def main():
 
         print(f"\n=======================================================")
         print(f" Executing DoE Trial: {tag}")
-        print(f" Config Generated: {gen_config_file}")
+        print(f" Config Generated: {gen_config_file.name}")
         print(f" Overrides: {overrides}")
         print(f"=======================================================")
 
-        pnr_script = workspace_root / "tools" / "run_pnr.py"
-        cmd = [
-            sys.executable, str(pnr_script), args.module,
-            "--run-tag", tag,
-            "--overwrite"
-        ]
+        # Run PnR using shared run_single_pnr helper
+        ret, _ = run_single_pnr(
+            workspace_root, librelane_dir, pdk_root, target_design_dir, gen_config_file,
+            run_tag=tag, overwrite=True, report_qor=True, dry_run=args.dry_run
+        )
 
-        # Pass custom parameters directly if needed or use run_pnr.py
-        env = os.environ.copy()
-        
-        # Invoke LibreLane directly using generated config
-        librelane_cmd = [
-            sys.executable, "-m", "librelane",
-            "--hide-progress-bar",
-            "--pdk-root", str(pdk_root),
-            "-p", "sky130A",
-            "-s", merged_config.get("STD_CELL_LIBRARY", "sky130_fd_sc_hs"),
-            "--run-tag", tag,
-            "--overwrite",
-            str(gen_config_file)
-        ]
+        if ret != 0:
+            print(f"Trial {tag} failed with return code {ret}")
 
-        print(f"Command: {' '.join(librelane_cmd)}")
-        if not args.dry_run:
-            res = subprocess.run(librelane_cmd, cwd=librelane_dir, env=env)
-            if res.returncode != 0:
-                print(f"Trial {tag} failed with return code {res.returncode}")
-        
         # Update report after trial
         update_qor_report(workspace_root, args.module, target_design_dir, plan_data)
 
