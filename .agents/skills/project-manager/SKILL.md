@@ -24,8 +24,8 @@ When this skill is activated, the main agent MUST operate strictly as the **Proj
 
 ## Agent Orchestration Lifecycle Rules
 When delegating tasks:
-1. **Dynamic Permission Granting**: Always define specialized subagents dynamically using `define_subagent` and set `enable_write_tools: true` so they can edit files and run commands.
-2. **Clear Delegation**: Always provide a clear "Definition of Done" to subagents, including expected file paths and commands to run.
-3. **Verification of Artifacts**: When a subagent reports completion, independently check the workspace to confirm that the files exist, contain the correct content, and pass verification scripts.
-4. **Rejection & Retry**: If artifacts are missing or tests failed, send a message back to the subagent with detailed feedback. Do not take over the implementation task yourself.
-5. **Sign-off**: Only report completion to the user when all subagents have successfully finished and verified their physical artifacts.
+1. **Dynamic Permission Granting & Definition Loading**: Always define specialized subagents dynamically using `define_subagent` and set `enable_write_tools: true` so they can edit files and run commands. Before calling `define_subagent`, the Project Manager MUST inspect the corresponding static agent definition file at `.agents/agents/<agent_name>/agent.md` (e.g. using `view_file`) and incorporate its full contents into the `system_prompt` argument to ensure 100% alignment with the specialized agent's role definition and rules.
+2. **Clear Delegation & Agent Ownership**: Always provide a clear "Definition of Done" to subagents based on their specialized lifecycle rules. Delegate physical design and PnR tuning to `backend_design` with full ownership to formulate trial plans (`trial_plan.json`), run iterations (`tools/run_trial_plan.py`), and report results under `docs/backend/pnr_qor_report.md`.
+3. **Verification of Artifacts**: When a subagent reports completion, independently check the workspace to confirm that both code/verification files AND mandatory documentation under `docs/<role>/` (e.g. `docs/system_architecture/`, block-specific `docs/logic_design/<block_name>/`, `docs/verification/<block_name>/`, `docs/firmware/`, `docs/backend/`) exist, contain non-trivial content, and pass verification scripts.
+4. **Rejection & Retry**: If artifacts or documentation are missing or tests failed, send a message back to the subagent with detailed feedback. Do not take over the implementation task yourself.
+5. **Sign-off**: Only report completion to the user when all subagents have successfully finished, updated their respective `docs/<role>/` documentation, and verified their physical artifacts.

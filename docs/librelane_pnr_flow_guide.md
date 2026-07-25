@@ -146,13 +146,14 @@ PnR完了後、集計スクリプトを実行して各フェーズ（Synth / Pla
 xhost +
 
 # OpenROAD GUI を起動 (配置配線・タイミングパス・ヒートマップの確認)
-./tools/open_viewer.sh openroad librelane_designs/<新規モジュール名>/config.json run_100MHz
+./tools/open_viewer.sh <モジュール名>           # 例: ./tools/open_viewer.sh counter
+./tools/open_viewer.sh openroad <モジュール名>  # 例: ./tools/open_viewer.sh openroad counter
 
 # KLayout GUI を起動 (GDSII マスクレイアウトの閲覧)
-./tools/open_viewer.sh klayout librelane_designs/<新規モジュール名>/config.json run_100MHz
+./tools/open_viewer.sh <モジュール名> klayout   # 例: ./tools/open_viewer.sh counter klayout
 
 # Magic GUI を起動 (DRC 違反個所の確認)
-./tools/open_viewer.sh magic librelane_designs/<新規モジュール名>/config.json run_100MHz
+./tools/open_viewer.sh magic <モジュール名>    # 例: ./tools/open_viewer.sh magic counter
 ```
 
 ---

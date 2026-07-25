@@ -104,6 +104,7 @@ make all
 *   [MAC Array Project Guide](mac_array_test/AGENTS.md): Systolic Array for PnR/IR-Drop testing.
 *   [AES PRNG Project Guide](aes_prng_test/AGENTS.md): Self-stimulating AES core for high-switching IR-Drop testing.
 *   [CPU + AES/PRNG Project Guide](cpu_aes_prng_test/AGENTS.md): Integrated RISC-V CPU + AES-DMA Subsystem for IR-Drop stress testing.
+*   [VDRV_v1 Project Guide](VDRV_v1/AGENTS.md): Voltage Drop on RISC-V v1 multi-block ASIC testbed with dual-mode hybrid sequencer.
 
 ---
 

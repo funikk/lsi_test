@@ -20,7 +20,7 @@ SYN_YS   = $(SYN_DIR)/run_synth.ys
 SYN_NETLIST = $(SYN_DIR)/sync_fifo_synth.v
 SIM_CELLS = /usr/share/yosys/simlib.v
 
-.PHONY: all lint presynth_check rtl_sim syn gls_sim clean
+.PHONY: all lint presynth_check rtl_sim syn gls_sim pnr pnr_qor clean
 
 all: lint presynth_check rtl_sim syn gls_sim
 
@@ -48,8 +48,17 @@ gls_sim: syn
 	mv tb_sync_fifo.vcd $(GLS_DIR)/ || true
 	mv gls_sim.out $(GLS_DIR)/ || true
 
-# 5. Clean up temporary files
+# 5. PnR Flow
+pnr:
+	python3 ../tools/run_pnr.py sync_fifo
+
+# 6. PnR QoR Report
+pnr_qor:
+	../tools/report_qor_phases.py ../librelane_designs/sync_fifo/runs/run_100MHz
+
+# 7. Clean up temporary files
 clean:
 	rm -f $(SIM_DIR)/rtl_sim.out $(SIM_DIR)/tb_sync_fifo.vcd
 	rm -f $(GLS_DIR)/gls_sim.out $(GLS_DIR)/tb_sync_fifo.vcd
 	rm -f $(SYN_DIR)/sync_fifo_synth.v
+

@@ -160,7 +160,8 @@ Update the `Makefile` inside `<MODULE_DIRECTORY>/` to add `pnr` and `pnr_qor` ta
    ```makefile
    # PnR QoR Report
    pnr_qor:
-   	../tools/report_qor_phases.py ../librelane_designs/<MODULE_NAME>/runs/run_100MHz
+   	mkdir -p docs/backend
+   	../tools/report_qor_phases.py ../librelane_designs/<MODULE_NAME>/runs/run_100MHz > docs/backend/pnr_qor_report.md
    ```
 
 ---
@@ -189,7 +190,8 @@ make pnr_qor
 ### Step 5: Verify & Report Results
 
 1. Verify formatting of `config.json`, `constraint.sdc`, `Makefile`, and `AGENTS.md`.
-2. Present a concise summary to the user including file links, applied constraints, and execution instructions.
+2. Ensure PnR QoR metrics and signoff results are recorded in `<MODULE_DIRECTORY>/docs/backend/pnr_qor_report.md`.
+3. Present a concise summary to the user including file links, applied constraints, and execution instructions.
 
 ---
 

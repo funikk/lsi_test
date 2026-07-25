@@ -237,7 +237,7 @@ uv run python3 -m librelane \
 
 ### 結果確認スクリプト
 * **QoRフェーズ別集計**: `./tools/report_qor_phases.py librelane_designs/aes_prng_top/runs/run_pnr`
-* **GUIビューア起動 (OpenROAD / KLayout / Magic)**: `./tools/open_viewer.sh openroad`
+* **GUIビューア起動 (OpenROAD / KLayout / Magic)**: `./tools/open_viewer.sh counter` (または `./tools/open_viewer.sh openroad counter`)
 
 ---
 
