@@ -102,6 +102,7 @@ module VDRV_v1_core (
     wire ls_mem_ready;
     wire [31:0] ls_mem_rdata;
     wire ls_irq;
+    wire aes_hw_direct_active;
 
     assign irq[3] = ls_irq;
 
@@ -121,6 +122,7 @@ module VDRV_v1_core (
         .mem_rdata(ls_mem_rdata),
         .mem_ready(ls_mem_ready),
         .aes_load_mode_en(aes_load_mode_en),
+        .hw_direct_active(aes_hw_direct_active),
         .cpu_load_state(cpu_load_state),
         .cpu_irq(ls_irq)
     );
@@ -138,6 +140,8 @@ module VDRV_v1_core (
     aes_dma_subsys u_aes_dma (
         .clk(clk),
         .rst_n(rst_n),
+        .hw_load_mode_active(aes_hw_direct_active),
+        .hw_load_mode_en(aes_load_mode_en),
         .mmio_valid(aes_mem_valid),
         .mmio_wstrb(mem_wstrb),
         .mmio_addr(mem_addr),

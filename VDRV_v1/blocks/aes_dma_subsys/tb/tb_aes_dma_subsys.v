@@ -4,6 +4,8 @@ module tb_aes_dma_subsys;
 
     reg clk;
     reg rst_n;
+    reg hw_load_mode_active;
+    reg hw_load_mode_en;
 
     // MMIO Slave
     reg mmio_valid;
@@ -25,6 +27,8 @@ module tb_aes_dma_subsys;
     aes_dma_subsys u_dut (
         .clk(clk),
         .rst_n(rst_n),
+        .hw_load_mode_active(hw_load_mode_active),
+        .hw_load_mode_en(hw_load_mode_en),
         .mmio_valid(mmio_valid),
         .mmio_wstrb(mmio_wstrb),
         .mmio_addr(mmio_addr),
@@ -75,6 +79,8 @@ module tb_aes_dma_subsys;
     initial begin
         clk = 0;
         rst_n = 0;
+        hw_load_mode_active = 0;
+        hw_load_mode_en = 0;
         mmio_valid = 0;
         mmio_wstrb = 0;
         mmio_addr = 0;
@@ -97,7 +103,22 @@ module tb_aes_dma_subsys;
             $fatal(1, "AES-DMA MMIO register verification failed");
         end
 
-        // Step 2: Read PRNG Output via MMIO
+        // Step 2: In hardware-direct mode, the sequencer signal takes
+        // priority over the software LOAD_MODE_EN bit.
+        hw_load_mode_active = 1'b1;
+        hw_load_mode_en = 1'b1;
+        #1;
+        if (u_dut.load_mode_en !== 1'b1) begin
+            $fatal(1, "Hardware-direct AES load enable was not selected");
+        end
+        hw_load_mode_en = 1'b0;
+        #1;
+        if (u_dut.load_mode_en !== 1'b0) begin
+            $fatal(1, "Hardware-direct AES load disable was not selected");
+        end
+        hw_load_mode_active = 1'b0;
+
+        // Step 3: Read PRNG Output via MMIO
         mmio_read(32'h8000_0030, read_val);
         $display("[UNIT SIM: aes_dma_subsys] PRNG[0] Output via MMIO = 0x%08h", read_val);
 

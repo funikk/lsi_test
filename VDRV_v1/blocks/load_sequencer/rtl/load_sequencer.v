@@ -21,6 +21,7 @@ module load_sequencer (
 
     // Outputs
     output reg aes_load_mode_en,
+    output wire hw_direct_active,
     output reg [1:0] cpu_load_state,
     output reg cpu_irq
 );
@@ -39,6 +40,12 @@ module load_sequencer (
     reg [15:0] duration_cnt;
     reg [3:0] current_step;
     reg running;
+
+    // Identifies that the sequencer owns the direct load controls.  Keeping
+    // this separate from aes_load_mode_en lets a consumer distinguish an
+    // IDLE/CPU_FULL sequence step from an inactive sequencer.  In IRQ mode
+    // the CPU retains ownership and changes AES mode through MMIO instead.
+    assign hw_direct_active = running && !irq_mode;
 
     // MMIO Handling
     always @(posedge clk or negedge rst_n) begin

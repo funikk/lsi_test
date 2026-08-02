@@ -7,3 +7,13 @@
 ## 2. メモリマップ & MMIO
 * MMIO アドレス範囲: `0x8000_0000 - 0x8000_0048`
 * 機能: DMA 転送制御、AES モード切替、キー/シード設定。
+
+## 3. Load Sequencer直結制御
+
+`load_sequencer` がHW-Direct Modeで実行中である間、`hw_load_mode_en` が
+ソフトウェアの `REG_CTRL[1]` (`LOAD_MODE_EN`) より優先される。これにより、
+HW-Direct
+Mode の `AES_FULL` / `BOTH_FULL` ステップではAES/PRNG連続負荷を有効化し、
+`IDLE` / `CPU_FULL` ステップでは停止できる。シーケンサ停止後は、従来どおり
+`REG_CTRL[1]` の設定がload modeを制御する。CPU-IRQ Modeでは、シーケンサは
+直接制御を行わず、CPUが割り込み処理で `REG_CTRL[1]` を更新する。

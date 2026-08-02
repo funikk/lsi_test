@@ -6,6 +6,12 @@ module aes_dma_subsys (
     input wire clk,
     input wire rst_n,
 
+    // Hardware-direct load control from load_sequencer.  While active, this
+    // takes ownership of load mode; otherwise the software MMIO setting is
+    // used unchanged.
+    input wire hw_load_mode_active,
+    input wire hw_load_mode_en,
+
     // MMIO Slave Interface (from CPU)
     input wire mmio_valid,
     input wire [3:0] mmio_wstrb,
@@ -34,7 +40,8 @@ module aes_dma_subsys (
 
     // Internal Control Signals
     wire dma_start_pulse   = mmio_valid && (mmio_wstrb != 4'b0) && (mmio_addr[7:0] == 8'h00) && mmio_wdata[0];
-    wire load_mode_en      = reg_ctrl[1];
+    wire sw_load_mode_en   = reg_ctrl[1];
+    wire load_mode_en      = hw_load_mode_active ? hw_load_mode_en : sw_load_mode_en;
     wire seed_load_pulse   = mmio_valid && (mmio_wstrb != 4'b0) && (mmio_addr[7:0] == 8'h00) && mmio_wdata[2];
 
     // PRNG Instance
