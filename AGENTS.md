@@ -123,28 +123,3 @@ When writing documentation and configuration files (such as `config.json` or Mak
   * **Agent-facing documentation (rules, agent configurations, orchestration guidelines)** MUST be written in English to ensure accurate interpretation by LLM agents.
   * **User-facing documentation (specifications, setup guides, architectural documents)** should be written in Japanese to support the development team.
 
-## 6. Agent Orchestration & Task Delegation Rules
-
-The following specialized subagents are defined in this project. It is highly recommended to delegate tasks and collaborate with them (using `invoke_subagent` / `send_message`) as necessary.
-
-* **project_manager**: Overall task breakdown, orchestration, and final verification of artifacts.
-* **system_architect**: System architecture design, specification drafting, and HW/SW partitioning.
-* **logic_design**: RTL implementation (Verilog), block integration, and linting.
-* **logic_verification**: Testbench implementation, coverage verification, and GLS.
-* **firmware_design**: Firmware (C/Assembly) development and test vector provision.
-* **backend_design**: Physical implementation (Logic synthesis, PnR, STA).
-* **methodology_engineer**: Setup of EDA toolchains (simulators, linters, waveform viewers, PDKs) and interface abstraction (Makefiles, python wrappers, custom skills).
-
-
-The parent agent (or Project Manager) must strictly adhere to the following rules when assigning tasks to subagents and receiving completion reports:
-
-1. **Explicit Definition of Done**:
-   When assigning a task, always include the "expected artifacts (file paths)", "verification commands to run (e.g., `make rtl_sim`)", and "expected outputs to check" in the prompt.
-2. **Verification of Artifacts**:
-   Do not take a text report of "completed" from a subagent at face value. Always use tools to verify that the artifacts have actually been created or updated in the local filesystem.
-3. **Rejection & Retry**:
-   If the actual file is not generated or the command execution log does not exist, the parent agent must not take over and perform the work itself. Demand a retry from the subagent: "The file was not created. Instead of outputting mock text, use your tools to write the file and execute the commands."
-4. **Ensuring Agent Permissions & Workflow Skill References (Dynamic Definition Required)**:
-   Do NOT simply invoke subagents using pre-existing static definitions if they require tool access. You MUST dynamically define the subagent first using the `define_subagent` tool and explicitly set `enable_write_tools: true` (for file/command execution) or `enable_subagent_tools: true` (for nested invocation).
-   To simplify invocation and eliminate file inspection overhead, pass a concise `system_prompt` instructing the subagent to load its role workflow skill in `.agents/skills/<role-name>/SKILL.md` (e.g. `system_prompt: "You are the Logic Design Engineer. Read and strictly follow your workflow skill in .agents/skills/logic-design/SKILL.md before taking action."`).
-
