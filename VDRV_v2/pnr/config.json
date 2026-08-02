@@ -1,0 +1,32 @@
+{
+    "DESIGN_NAME": "VDRV_v2_core",
+    "VERILOG_FILES": [
+        "dir::../blocks/aes_core/rtl/aes_sbox.v",
+        "dir::../blocks/aes_core/rtl/aes_core.v",
+        "dir::../blocks/lfsr_prng/rtl/lfsr_prng_ctrl.v",
+        "dir::../blocks/aes_dma_subsys/rtl/aes_dma_subsys.v",
+        "dir::../blocks/picorv32_cpu/rtl/picorv32.v",
+        "dir::../common/rtl/reset_sync.v",
+        "dir::../blocks/uart_ctrl/rtl/uart_rx.v",
+        "dir::../blocks/uart_ctrl/rtl/uart_tx.v",
+        "dir::../blocks/uart_ctrl/rtl/uart_pkt_parser.v",
+        "dir::../blocks/uart_ctrl/rtl/uart_ctrl.v",
+        "dir::../blocks/load_sequencer/rtl/load_sequencer.v",
+        "dir::../blocks/aes_power_manager/rtl/aes_power_manager.v",
+        "dir::../blocks/aes_power_manager/rtl/aes_isolation.v",
+        "dir::../blocks/aes_power_manager/rtl/aes_prng_pd.v",
+        "dir::../top/rtl/VDRV_v2_core.v"
+    ],
+    "CLOCK_PERIOD": 10.0,
+    "CLOCK_PORT": "clk",
+    "CLOCK_NET": "ref::$CLOCK_PORT",
+    "STD_CELL_LIBRARY": "sky130_fd_sc_hs",
+    "STD_CELL_LIBRARY_OPT": "sky130_fd_sc_hs",
+    "IO_PIN_ORDER_CFG": "dir::pin_order.cfg",
+    "FALLBACK_SDC": "dir::constraint.sdc",
+    "pdk::sky130*": {
+        "FP_CORE_UTIL": 40,
+        "PL_TARGET_DENSITY_PCT": 45,
+        "MAX_FANOUT_CONSTRAINT": 20
+    }
+}
