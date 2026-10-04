@@ -1,0 +1,101 @@
+## ==============================================================================
+## VDRV_v2 IEEE 1801 UPF Power Specification: Header Switch (PMOS) Implementation
+## Design: VDRV_v2_core
+## Power Domain Architecture:
+##   - PD_TOP : Always-On (AON) default power domain (CPU, UART, Sequencer, Power Mgr)
+##   - PD_AES : Power-gated domain for AES-128 Core & LFSR PRNG
+## Switch Architecture:
+##   - Header Switch (PMOS) between permanent VDD and virtual VDD_V
+## ==============================================================================
+
+upf_version 2.0
+
+## -----------------------------------------------------------------------------
+## 1. Power Domains Definition
+## -----------------------------------------------------------------------------
+# Top-level Always-On (AON) power domain
+create_power_domain PD_TOP -include_scope
+
+# Power-gated domain containing AES Core and PRNG
+create_power_domain PD_AES -elements {u_aes_dma/u_aes_prng_pd}
+
+## -----------------------------------------------------------------------------
+## 2. Supply Ports & Supply Nets
+## -----------------------------------------------------------------------------
+# Top-level primary power and ground ports
+create_supply_port VDD -direction in
+create_supply_port VSS -direction in
+
+# Supply nets in PD_TOP domain
+create_supply_net VDD -domain PD_TOP
+create_supply_net VSS -domain PD_TOP
+
+# Connect supply ports to supply nets in PD_TOP
+connect_supply_net VDD -ports {VDD}
+connect_supply_net VSS -ports {VSS}
+
+# Supply nets in PD_AES domain
+# VSS is shared with PD_TOP (Common Ground)
+create_supply_net VSS   -domain PD_AES -reuse
+# Virtual VDD (VDD_V) is switched by Header Power Switch
+create_supply_net VDD_V -domain PD_AES
+
+## -----------------------------------------------------------------------------
+## 3. Domain Primary Supply Connections
+## -----------------------------------------------------------------------------
+set_domain_supply_net PD_TOP \
+    -primary_power_net VDD \
+    -primary_ground_net VSS
+
+set_domain_supply_net PD_AES \
+    -primary_power_net VDD_V \
+    -primary_ground_net VSS
+
+## -----------------------------------------------------------------------------
+## 4. Power Switch Specification (Header Switch / PMOS)
+## -----------------------------------------------------------------------------
+# Header switch connects permanent VDD to virtual VDD_V.
+# Controlled by active-high 'pd_aes_on' (1: Power ON, 0: Power OFF).
+# Note: If cell uses active-high SLEEP pin, invert polarity in -on_state accordingly.
+create_power_switch PSW_HEADER_PD_AES \
+    -domain PD_AES \
+    -input_supply_port  {in_vdd VDD} \
+    -output_supply_port {out_vdd_v VDD_V} \
+    -control_port       {ctrl_en pd_aes_on} \
+    -on_state           {ON_STATE in_vdd {ctrl_en}}
+
+## -----------------------------------------------------------------------------
+## 5. Isolation Strategy
+## -----------------------------------------------------------------------------
+# Isolate outputs of PD_AES to prevent X-propagation to PD_TOP when PD_AES is OFF.
+# Clamped to Low (0) matching aes_isolation.v specification.
+# Isolation cells are powered from AON domain (VDD / VSS).
+set_isolation ISO_PD_AES \
+    -domain PD_AES \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -clamp_value 0 \
+    -applies_to outputs
+
+set_isolation_control ISO_PD_AES \
+    -domain PD_AES \
+    -isolation_signal aes_isolate \
+    -isolation_sense high \
+    -location parent
+
+## -----------------------------------------------------------------------------
+## 6. Power State Table (PST) Definition
+## -----------------------------------------------------------------------------
+add_port_state VDD -state {ON 1.80}
+add_port_state VSS -state {GND 0.00}
+add_port_state PSW_HEADER_PD_AES/out_vdd_v \
+    -state {ON 1.80} \
+    -state {OFF off}
+
+create_pst PST_VDRV -supplies {VDD VSS PSW_HEADER_PD_AES/out_vdd_v}
+
+# Normal operation: Both PD_TOP and PD_AES powered ON
+add_pst_state ALL_ON  -pst PST_VDRV -state {ON GND ON}
+
+# Power-gated state: PD_TOP is ON, PD_AES is powered OFF
+add_pst_state AES_OFF -pst PST_VDRV -state {ON GND OFF}
