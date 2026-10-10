@@ -10,7 +10,13 @@ Key features: parameterized load-tile array (`TILE_ROWS` x `TILE_COLS` + heterog
 *   [Top-Level Specification (docs/system_architecture/spec_top.md)](docs/system_architecture/spec_top.md): Authoritative spec (Japanese). Section 12 defines the implementation phases.
 *   [Architecture Decision Record (docs/system_architecture/architecture_candidates.md)](docs/system_architecture/architecture_candidates.md)
 
-Status: Phase 0 (spec written). Reused blocks copied from `VDRV_v2`: `aes_core`, `lfsr_prng`, `picorv32_cpu`, `uart_ctrl`, `load_sequencer` (to be extended), `aes_power_manager` (reference only; to be replaced by `pwr_manager`). `template_block` and `top/rtl/VDRV_v3_top.v` are skeleton placeholders.
+Status: Phase 1-4 complete (RTL blocks, top integration, firmware scenarios, system co-simulation verified). Phase 5 implemented (commercial UPF/SDC/cell mapping templates in `impl/commercial/`, local LibreLane PnR flow prepared in `pnr/`).
+
+Key references:
+*   [Top-Level Specification (docs/system_architecture/spec_top.md)](docs/system_architecture/spec_top.md): System architecture and scenario specifications.
+*   [Commercial Implementation Guide (impl/commercial/README.md)](impl/commercial/README.md): UPF, SDC, and cell mapping instructions for 40nm PDK.
+*   [PnR Configuration (pnr/config.json)](pnr/config.json): LibreLane physical design configuration.
+*   [PnR Timing Constraints (pnr/constraint.sdc)](pnr/constraint.sdc): OpenROAD STA constraints.
 
 Rules:
 *   Keep RTL PDK-independent. PDK-specific cells (SRAM, ICG, isolation, power switch) MUST be instantiated only through wrappers in `common/rtl/` (`vdrv_sram_wrap`, `vdrv_icg`, `vdrv_iso_and`).
@@ -26,51 +32,18 @@ VDRV_v3/
 ├── AGENTS.md                  # Project overview & developer guide
 ├── Makefile                   # Top dispatch Makefile (delegates tasks to blocks/ or top/)
 ├── common/                    # Shared assets across blocks
-│   ├── AGENTS.md              # Rules for shared headers & bus definitions
-│   └── rtl/
-│       └── defines.vh         # Shared global parameters & macro definitions
+│   ├── rtl/                   # PDK-abstracted wrappers (vdrv_icg, vdrv_sram_wrap, etc.)
+│   └── tb/                    # Testbench models (vdrv_pwr_switch_model)
 ├── docs/                      # Central technical specifications and domain plans
-│   ├── AGENTS.md              # Documentation guidelines & subagent directory mapping
-│   ├── system_architecture/   # System Architecture specs (managed by system_architect)
-│   ├── logic_design/          # Interface & protocol specs (managed by logic_design)
-│   ├── verification/          # Test & coverage plans (managed by logic_verification)
-│   ├── backend/               # Floorplan, timing & PnR specs (managed by backend_design)
-│   └── firmware/              # MMIO maps & driver specs (managed by firmware_design)
-├── blocks/                    # Independent sub-block sandboxes (assigned per developer/agent)
-│   └── template_block/        # Reference template for creating new sub-blocks
-│       ├── AGENTS.md          # Sub-block developer guide
-│       ├── filelist.f         # Sub-block file list
-│       ├── rtl/               # Sub-block synthesizable Verilog source
-│       ├── tb/                # Sub-block unit testbench
-│       ├── sim/               # Isolated unit simulation output
-│       ├── syn/               # Out-of-Context (OOC) block synthesis output
-│       ├── docs/              # Sub-block technical specification
-│       └── Makefile           # Standalone sub-block Makefile
-└── top/                       # Top Integration Layer (System Integrator)
-    ├── AGENTS.md              # System integration guide
-    ├── filelist.f             # Top integration file list
-    ├── rtl/
-    │   └── VDRV_v3_top.v # Top wrapper module connecting sub-blocks
-    ├── tb/
-    │   └── tb_VDRV_v3_top.v # Full system testbench
-    ├── sim/                   # System simulation output
-    ├── syn/                   # Full chip synthesis output
-    └── Makefile               # Integration Makefile
+├── blocks/                    # Independent sub-block sandboxes
+├── top/                       # Top Integration Layer (VDRV_v3_core, VDRV_v3_top)
+├── impl/commercial/           # Commercial 40nm PDK templates (UPF, SDC, cell_map.md)
+└── pnr/                       # Local PnR flow (LibreLane OpenROAD)
 ```
 
 ---
 
 ## 2. Developer Workflow & Automation Commands
-
-### Sub-Block Sandbox Development
-Developers work independently in `blocks/<block_name>/`:
-```bash
-cd blocks/template_block
-make unit_sim
-
-# Or from project root:
-make BLOCK=template_block block_sim
-```
 
 ### Root Parallel Verification Commands
 The top dispatch Makefile supports parallel execution across all sub-blocks:
@@ -88,6 +61,15 @@ make presynth_check
 # 4. Run top-level integrated system simulation
 make top_sim
 
-# 5. Clean temporary simulation/synthesis outputs across all blocks and top
+# 5. Run full-chip synthesis (Yosys)
+make top_syn
+
+# 6. Run physical design (PnR) flow using LibreLane
+make pnr
+
+# 7. Generate PnR QoR & phase report
+make pnr_qor
+
+# 8. Clean temporary simulation/synthesis outputs
 make clean
 ```

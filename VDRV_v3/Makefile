@@ -76,7 +76,7 @@ pnr:
 
 pnr_qor:
 	mkdir -p docs/backend
-	../tools/report_qor_phases.py ../librelane_designs/VDRV_v3_core/runs/run_100MHz > docs/backend/pnr_qor_report.md
+	../tools/report_qor_phases.py $$(ls -td pnr/runs/run_* | head -1) > docs/backend/pnr_qor_report.md
 
 clean:
 	@for dir in $(BLOCK_DIRS) $(TOP_DIR); do \

@@ -1,0 +1,121 @@
+## ==============================================================================
+## IEEE 1801 Unified Power Format (UPF 2.0 / 3.0) Template for VDRV_v3
+## Target Process: Commercial 40nm PDK (e.g., TSMC 40nm LP/ULP)
+## Scope: Power Intent for Multi-Domain Dynamic IR / EM Benchmark Chip
+## ==============================================================================
+
+# 1. Top Power Domain Definition
+set_scope /
+create_power_domain PD_TOP -include_scope
+
+# 2. Supply Ports and Nets (Always-On Rails)
+create_supply_port VDD -direction in
+create_supply_port VSS -direction in
+
+create_supply_net VDD -domain PD_TOP
+create_supply_net VSS -domain PD_TOP
+
+set_domain_supply_net PD_TOP -primary_power_net VDD -primary_ground_net VSS
+
+# 3. Switched Power Domains (Per Tile Row: 2 Rows baseline for 2x2+Edge array)
+# ------------------------------------------------------------------------------
+# Row 0 Domain (gen_row[0])
+create_power_domain PD_ROW0 \
+    -elements {u_core/gen_row[0]}
+
+create_supply_net VDD_ROW0 -domain PD_ROW0
+create_supply_net VDD_ROW0_TRICKLE -domain PD_ROW0
+
+set_domain_supply_net PD_ROW0 -primary_power_net VDD_ROW0 -primary_ground_net VSS
+
+# Row 1 Domain (gen_row[1])
+create_power_domain PD_ROW1 \
+    -elements {u_core/gen_row[1]}
+
+create_supply_net VDD_ROW1 -domain PD_ROW1
+create_supply_net VDD_ROW1_TRICKLE -domain PD_ROW1
+
+set_domain_supply_net PD_ROW1 -primary_power_net VDD_ROW1 -primary_ground_net VSS
+
+# 4. Two-Stage Power Switches (Trickle and Main)
+# ------------------------------------------------------------------------------
+# Row 0 Switches
+create_power_switch PSW_ROW0_TRICKLE \
+    -domain PD_ROW0 \
+    -input_supply_port  in_vdd  VDD \
+    -output_supply_port out_vdd VDD_ROW0 \
+    -control_port       en      u_core/sw_trickle_en[0] \
+    -ack_port           ack     u_core/sw_trickle_ack[0] \
+    -on_state {ON in_vdd {!en}}
+
+create_power_switch PSW_ROW0_MAIN \
+    -domain PD_ROW0 \
+    -input_supply_port  in_vdd  VDD \
+    -output_supply_port out_vdd VDD_ROW0 \
+    -control_port       en      u_core/sw_main_en[0] \
+    -ack_port           ack     u_core/sw_main_ack[0] \
+    -on_state {ON in_vdd {!en}}
+
+# Row 1 Switches
+create_power_switch PSW_ROW1_TRICKLE \
+    -domain PD_ROW1 \
+    -input_supply_port  in_vdd  VDD \
+    -output_supply_port out_vdd VDD_ROW1 \
+    -control_port       en      u_core/sw_trickle_en[1] \
+    -ack_port           ack     u_core/sw_trickle_ack[1] \
+    -on_state {ON in_vdd {!en}}
+
+create_power_switch PSW_ROW1_MAIN \
+    -domain PD_ROW1 \
+    -input_supply_port  in_vdd  VDD \
+    -output_supply_port out_vdd VDD_ROW1 \
+    -control_port       en      u_core/sw_main_en[1] \
+    -ack_port           ack     u_core/sw_main_ack[1] \
+    -on_state {ON in_vdd {!en}}
+
+# 5. Isolation Strategy (Clamp to LOW / 0 on Power-Down)
+# ------------------------------------------------------------------------------
+set_isolation ISO_ROW0_OUT \
+    -domain PD_ROW0 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -clamp_value 0 \
+    -applies_to outputs
+
+set_isolation_control ISO_ROW0_OUT \
+    -domain PD_ROW0 \
+    -isolation_signal u_core/iso_en[0] \
+    -isolation_sense high \
+    -location parent
+
+set_isolation ISO_ROW1_OUT \
+    -domain PD_ROW1 \
+    -isolation_power_net VDD \
+    -isolation_ground_net VSS \
+    -clamp_value 0 \
+    -applies_to outputs
+
+set_isolation_control ISO_ROW1_OUT \
+    -domain PD_ROW1 \
+    -isolation_signal u_core/iso_en[1] \
+    -isolation_sense high \
+    -location parent
+
+# 6. Retention Strategy (Optional for V3: Reset-on-Wakeup is standard)
+# ------------------------------------------------------------------------------
+# Tile flops are reset upon power-up via pd_rst_n, hence no retention flops required.
+
+# 7. Power State Table (PST)
+# ------------------------------------------------------------------------------
+add_power_state VDD -state {ON  1.1}
+add_power_state VSS -state {GND 0.0}
+
+add_power_state VDD_ROW0 -state {ON  1.1} -state {OFF off}
+add_power_state VDD_ROW1 -state {ON  1.1} -state {OFF off}
+
+create_pst VDRV_V3_PST -supplies {VDD VSS VDD_ROW0 VDD_ROW1}
+
+add_pst_state ALL_ON     -pst VDRV_V3_PST -state {ON GND ON  ON }
+add_pst_state ROW0_ONLY  -pst VDRV_V3_PST -state {ON GND ON  OFF}
+add_pst_state ROW1_ONLY  -pst VDRV_V3_PST -state {ON GND OFF ON }
+add_pst_state ALL_OFF    -pst VDRV_V3_PST -state {ON GND OFF OFF}
