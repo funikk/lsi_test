@@ -106,6 +106,7 @@ make all
 *   [AES PRNG Project Guide](aes_prng_test/AGENTS.md): Self-stimulating AES core for high-switching IR-Drop testing.
 *   [CPU + AES/PRNG Project Guide](cpu_aes_prng_test/AGENTS.md): Integrated RISC-V CPU + AES-DMA Subsystem for IR-Drop stress testing.
 *   [VDRV_v1 Project Guide](VDRV_v1/AGENTS.md): Voltage Drop on RISC-V v1 multi-block ASIC testbed with dual-mode hybrid sequencer.
+*   [VDRV_v1a Project Guide](VDRV_v1a/AGENTS.md): Voltage Drop on RISC-V v1a multi-block ASIC testbed with dual-engine load generation (MAC array + parallel CRC RS mixer) and hybrid sequencer.
 *   [VDRV_v3 Project Guide](VDRV_v3/AGENTS.md): Scaled-up EM/IR tool testbench (100k-1M instances): load-tile array, per-row power domains with two-stage power switches, cycle-level pattern generators, EM stress structures.
 
 ---
