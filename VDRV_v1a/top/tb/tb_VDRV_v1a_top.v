@@ -53,9 +53,27 @@ module tb_VDRV_v1a_top;
         end
     endtask
 
+`ifdef SDF_FILE
     initial begin
+        $display("[TB] Annotating SDF file: %s to instance tb_VDRV_v1a_top.u_top.u_core", `SDF_FILE);
+        $sdf_annotate(`SDF_FILE, u_top.u_core);
+    end
+`endif
+
+    initial begin
+`ifdef DUMP_FSDB
+        $fsdbDumpfile("tb_VDRV_v1a_top.fsdb");
+        $fsdbDumpvars(0, tb_VDRV_v1a_top, "+all");
+        $fsdbDumpMDA();
+`elsif DUMP_VCD
         $dumpfile("tb_VDRV_v1a_top.vcd");
         $dumpvars(0, tb_VDRV_v1a_top);
+`elsif NO_DUMP
+        // Waveform dump disabled
+`else
+        $dumpfile("tb_VDRV_v1a_top.vcd");
+        $dumpvars(0, tb_VDRV_v1a_top);
+`endif
 
         rst_n = 0;
         in_valid = 0;
