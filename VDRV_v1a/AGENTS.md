@@ -45,6 +45,17 @@ VDRV_v1a/
 │   ├── config.json                    # OpenROAD PnR configuration
 │   ├── constraint.sdc                 # SDC timing constraints (100 MHz target)
 │   └── pin_order.cfg                  # Die boundary pin placement configuration
+├── sim_vcs/                           # Synopsys VCS simulation & Verdi debug environment
+│   ├── Makefile                       # VCS build and run targets
+│   ├── vcs_filelist.f                 # Flat VCS compile filelist (+incdir+)
+│   └── run_vcs.sh                     # VCS execution script
+├── fc/                                # Synopsys Fusion Compiler (RTL-to-GDSII) environment
+│   ├── Makefile                       # FC stage-by-stage & batch targets
+│   ├── fc_env.sh                      # PDK & library environment variables
+│   ├── inputs/                        # SDC & Pin constraint scripts
+│   ├── scripts/                       # Modular execution Tcl scripts (00..09, run_all)
+│   ├── reports/                       # Timing, area, power, and QoR reports
+│   └── outputs/                       # DEF, SPEF, GDSII, and Verilog netlists
 └── docs/                              # Technical specifications and verification reports
     ├── system_architecture/
     │   ├── spec_top.md                # Top architecture, block diagram, and memory map
@@ -70,9 +81,12 @@ VDRV_v1a/
 ### Firmware & Physical Design
 *   [Firmware Specification (docs/firmware/spec_firmware.md)](docs/firmware/spec_firmware.md): MMIO register definitions, self-test flow, and cooperative polling loop.
 *   [Backend PnR QoR Report (docs/backend/pnr_qor_report.md)](docs/backend/pnr_qor_report.md): PnR configuration, SDC timing constraints, pin placement, and signoff criteria.
+*   [Commercial EDA User Guide (docs/commercial_eda_guide.md)](docs/commercial_eda_guide.md): Guide for running VCS simulation and Fusion Compiler physical implementation.
 *   [PnR Configuration (pnr/config.json)](pnr/config.json)
 *   [SDC Timing Constraints (pnr/constraint.sdc)](pnr/constraint.sdc)
 *   [Die Pin Order (pnr/pin_order.cfg)](pnr/pin_order.cfg)
+*   [Fusion Compiler Scripts (fc/scripts/)](fc/scripts/)
+*   [VCS Simulation Setup (sim_vcs/)](sim_vcs/)
 
 ### Verification Plans & Reports
 *   [Top System Test Plan (docs/verification/top/test_plan.md)](docs/verification/top/test_plan.md): Test scenarios, pass/fail criteria, and simulation matrix.
@@ -94,18 +108,39 @@ make lint
 # 3. Run fast Yosys pre-synthesis AST & quality checks
 make presynth_check
 
-# 4. Run top-level HW/SW co-simulation
+# 4. Run top-level HW/SW co-simulation (iverilog)
 make top_sim
 
-# 5. Run full chip logic synthesis
+# 5. Run full chip logic synthesis (yosys)
 make top_syn
 
-# 6. Run physical design (PnR) flow via LibreLane
+# 6. Run physical design (PnR) flow via LibreLane (OpenROAD)
 make pnr
 
 # 7. Generate phase-by-phase QoR & runtime report
 make pnr_qor
 
-# 8. Clean temporary files
+# 8. Run top-level RTL simulation with Synopsys VCS
+make vcs_sim
+
+# 9. Launch Verdi GUI for RTL waveform analysis
+make vcs_verdi
+
+# 10. Run Gate-Level Simulation (GLS) with Synopsys VCS
+make vcs_gls_sim
+
+# 11. Launch Verdi GUI for GLS waveform analysis
+make vcs_gls_verdi
+
+# 12. Run full RTL-to-GDSII flow with Synopsys Fusion Compiler
+make fc_all
+
+# 13. Run Logic Synthesis with Fusion Compiler
+make fc_synth
+
+# 14. Launch Fusion Compiler GUI
+make fc_gui
+
+# 15. Clean temporary files
 make clean
 ```

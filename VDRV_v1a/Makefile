@@ -7,7 +7,7 @@ UNIT_SIM_TARGETS := $(addprefix unit_sim_,$(BLOCK_NAMES))
 TOP_DIR    := top
 FW_DIR     := firmware
 
-.PHONY: all help firmware unit_sim $(UNIT_SIM_TARGETS) block_sim block_syn top_sim rtl_sim top_syn syn lint presynth_check pnr pnr_qor clean
+.PHONY: all help firmware unit_sim $(UNIT_SIM_TARGETS) block_sim block_syn top_sim rtl_sim top_syn syn lint presynth_check pnr pnr_qor vcs_sim vcs_verdi vcs_gls_sim vcs_gls_verdi fc_all fc_synth fc_gui clean
 
 all: firmware unit_sim top_sim
 
@@ -19,13 +19,22 @@ help:
 	@echo "make -j unit_sim        : Run unit simulations for all blocks in PARALLEL (Multi-core)"
 	@echo "make BLOCK=<name> block_sim : Run unit simulation for target block (e.g. BLOCK=template_block)"
 	@echo "make BLOCK=<name> block_syn : Run Out-of-Context synthesis for target block"
-	@echo "make top_sim (rtl_sim)  : Run top-level system integration simulation"
-	@echo "make top_syn (syn)      : Run full-chip synthesis"
+	@echo "make top_sim (rtl_sim)  : Run top-level system integration simulation (iverilog)"
+	@echo "make top_syn (syn)      : Run full-chip synthesis (yosys)"
 	@echo "make lint               : Run Verilator lint across all blocks and top"
 	@echo "make presynth_check     : Run fast Yosys pre-synthesis checks across all modules"
-	@echo "make pnr                : Run PnR flow using LibreLane"
+	@echo "make pnr                : Run PnR flow using LibreLane (OpenROAD)"
 	@echo "make pnr_qor            : Report PnR QoR & runtime summary"
-	@echo "make clean              : Clean temporary files in firmware, all blocks and top"
+	@echo "---------------------------------------------------"
+	@echo "Commercial EDA Tool Flow (Synopsys VCS & Fusion Compiler):"
+	@echo "make vcs_sim            : Run top-level RTL simulation with Synopsys VCS"
+	@echo "make vcs_verdi          : Launch Verdi GUI with FSDB waveform (RTL)"
+	@echo "make vcs_gls_sim        : Run Gate-Level Simulation (GLS) with Synopsys VCS"
+	@echo "make vcs_gls_verdi      : Launch Verdi GUI with FSDB waveform (GLS)"
+	@echo "make fc_all             : Run full RTL-to-GDSII flow with Fusion Compiler"
+	@echo "make fc_synth           : Run Logic Synthesis with Fusion Compiler"
+	@echo "make fc_gui             : Launch Fusion Compiler GUI (fc_shell -gui)"
+	@echo "make clean              : Clean temporary files across all flows"
 
 firmware:
 	@if [ -d $(FW_DIR) ]; then $(MAKE) -C $(FW_DIR); fi
@@ -83,9 +92,33 @@ pnr_qor:
 	mkdir -p docs/backend
 	../tools/report_qor_phases.py ../librelane_designs/VDRV_v1a_core/runs/run_100MHz > docs/backend/pnr_qor_report.md
 
+# Commercial EDA Tools (Synopsys VCS & Fusion Compiler)
+vcs_sim: firmware
+	$(MAKE) -C sim_vcs sim
+
+vcs_verdi:
+	$(MAKE) -C sim_vcs verdi
+
+vcs_gls_sim: firmware
+	$(MAKE) -C sim_vcs gls_sim
+
+vcs_gls_verdi:
+	$(MAKE) -C sim_vcs gls_verdi
+
+fc_all:
+	$(MAKE) -C fc all
+
+fc_synth:
+	$(MAKE) -C fc synth
+
+fc_gui:
+	$(MAKE) -C fc gui
+
 clean:
 	@if [ -d $(FW_DIR) ]; then $(MAKE) -C $(FW_DIR) clean; fi
 	@for dir in $(BLOCK_DIRS) $(TOP_DIR); do \
 		$(MAKE) -C $$dir clean; \
 	done
+	@if [ -d sim_vcs ]; then $(MAKE) -C sim_vcs clean; fi
+	@if [ -d fc ]; then $(MAKE) -C fc clean; fi
 

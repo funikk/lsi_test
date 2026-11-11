@@ -12,7 +12,11 @@ module imem #(
 
     // Optional initial firmware file
     initial begin
+`ifdef FIRMWARE_HEX
+        $readmemh(`FIRMWARE_HEX, mem);
+`else
         $readmemh("firmware.hex", mem);
+`endif
     end
 
     wire [31:0] word_addr = {2'b00, addr[31:2]};

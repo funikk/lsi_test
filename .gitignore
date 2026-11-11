@@ -47,3 +47,34 @@ librelane_designs/**/runs/
 *~
 *.pyc
 __pycache__/
+
+# ==========================================
+# 6. Synopsys VCS / Verdi シミュレーション生成物
+# ==========================================
+simv
+simv_*
+simv.daidir/
+simv_*.daidir/
+csrc/
+*.vdb/
+*.fsdb
+*.fsdb.fsdb
+*.vpd
+ucli.key
+vc_hdrs.h
+novas.*
+verdiLog/
+verdi_config_file
+
+# ==========================================
+# 7. Synopsys Fusion Compiler (FC) 実行生成物
+# ==========================================
+**/fc/work/
+**/fc/logs/
+**/fc/reports/
+**/fc/outputs/
+default.svf
+command.log
+filenames*.log
+alib-*/
+
