@@ -20,7 +20,7 @@ graph TD
     trap_out((trap_out))
     mac_en_pin((mac_load_mode_en))
     crc_en_pin((crc_load_mode_en))
-    cpu_state_pin((cpu_load_state[2:0]))
+    cpu_state_pin(("cpu_load_state[2:0]"))
 
     %% Submodules
     CPU[PicoRV32 RISC-V CPU]
@@ -46,9 +46,9 @@ graph TD
     %% Sequencer Outputs
     SEQ -->|mac_load_mode_en| DMA_SUBSYS & mac_en_pin
     SEQ -->|crc_load_mode_en| DMA_SUBSYS & crc_en_pin
-    SEQ -->|cpu_load_state[2:0]| cpu_state_pin
+    SEQ -->|"cpu_load_state[2:0]"| cpu_state_pin
     SEQ -->|hw_direct_active| DMA_SUBSYS
-    SEQ -->|cpu_irq (irq3)| CPU
+    SEQ -->|"cpu_irq (irq3)"| CPU
 
     %% Subsystem internals
     DMA_SUBSYS --- PRNG
